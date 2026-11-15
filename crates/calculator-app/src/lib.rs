@@ -1078,7 +1078,13 @@ impl CalculatorApp {
                 ui.collapsing("Bedienung",|ui|{ui.label("Ziffern, + − * /, Klammern und Enter. Rücktaste löscht eine Stelle, Escape alles und Entf die Eingabe.");});
                 ui.collapsing("Diagnose",|ui|{
                     let size=ctx.content_rect().size();
-                    let text=serde_json::to_string_pretty(&serde_json::json!({"version":VERSION,"commit":COMMIT,"viewport":{"width":size.x,"height":size.y,"pixelsPerPoint":ctx.pixels_per_point()},"theme":self.theme})).unwrap_or_default();
+                    let browser:serde_json::Value={
+                        #[cfg(target_arch="wasm32")]
+                        {web_sys::window().and_then(|w|w.document()).and_then(|d|d.document_element()).and_then(|e|e.get_attribute("data-viewport")).and_then(|s|serde_json::from_str(&s).ok()).unwrap_or(serde_json::Value::Null)}
+                        #[cfg(not(target_arch="wasm32"))]
+                        {serde_json::Value::Null}
+                    };
+                    let text=serde_json::to_string_pretty(&serde_json::json!({"version":VERSION,"commit":COMMIT,"viewport":{"width":size.x,"height":size.y,"pixelsPerPoint":ctx.pixels_per_point()},"theme":self.theme,"browser":browser})).unwrap_or_default();
                     ui.label(RichText::new(&text).monospace().small());
                     if ui.button("Diagnose kopieren").clicked(){ctx.copy_text(text);}
                 });

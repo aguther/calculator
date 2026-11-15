@@ -1,3 +1,21 @@
+// Use the visible browser area; standalone iOS can report different CSS viewport units.
+function syncViewport() {
+  const viewport = window.visualViewport;
+  const height = viewport?.height || window.innerHeight;
+  const top = viewport?.offsetTop || 0;
+  const root = document.documentElement;
+  root.style.setProperty('--viewport-height', `${height}px`);
+  root.style.setProperty('--viewport-top', `${top}px`);
+  const style = window.getComputedStyle?.(root);
+  root.setAttribute('data-viewport', JSON.stringify({innerHeight:window.innerHeight,visibleHeight:viewport?.height,offsetTop:top,dpr:window.devicePixelRatio,safeTop:style?.getPropertyValue('--safe-top'),safeBottom:style?.getPropertyValue('--safe-bottom'),standalone:!!navigator.standalone}));
+}
+syncViewport();
+window.addEventListener('resize', syncViewport);
+window.addEventListener('pageshow', syncViewport);
+window.visualViewport?.addEventListener('resize', syncViewport);
+window.visualViewport?.addEventListener('scroll', syncViewport);
+document.addEventListener('visibilitychange', () => {if (!document.hidden) syncViewport();});
+
 const update = document.querySelector('#update');
 let reloading = false;
 let hadController = !!navigator.serviceWorker?.controller;

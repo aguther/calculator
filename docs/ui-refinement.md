@@ -15,3 +15,11 @@ Automatisierte Browser-Prüfung über Playwright (Browser-Plugin in dieser Sitzu
 Rust-GUI-Tests prüfen einzeilige Minuten/Wert-Darstellung, Rechtsausrichtung, Panel-Seitenwechsel und sichtbare Tasten bei 300×400, 320×568, 400×760, 568×320, 844×390 und 1440×900. Zusätzlich gelten die bisherigen synthetischen JavaScript-/Rust-Referenzfälle. Visuell geprüft werden Original/Hell/Dunkel, kleine und große Ansichten und verschachtelte Gruppen. Installierte iOS-PWAs benötigen weiterhin eine ergänzende Prüfung auf einem echten iPhone.
 
 Schriftquelle und Lizenz: [eingebettete Noto-Sans-Schriften](../assets/fonts/README.md).
+
+## Dialogfuß und sichtbarer Viewport
+
+Die Überschrift und der Fertig-Button bleiben außerhalb des inneren Scrollbereichs. Der GUI-Test prüft Sichtbarkeit und unveränderte Position beim Scrollen bei 400, 568 und 760 logischen Pixeln Höhe; ein Browser-Test schließt den Dialog nach dem Scrollen über den sichtbaren Button.
+
+Für die PWA wird die sichtbare Höhe über [VisualViewport](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport) abgeglichen, mit `window.innerHeight` als Ersatz, falls die Schnittstelle fehlt. CSS behält `100dvh` als Ausgangswert. Größenänderungen, Wiederanzeigen und Rückkehr aus dem Hintergrund aktualisieren die Messung. Safe-Area-Abstände bleiben erhalten. Die Diagnose enthält ergänzend Browserhöhe, sichtbare Höhe, Offset und Systemabstände.
+
+Aus der iPhone-Diagnose von Version 0.1.3 (402×716 logische Pixel, Skalierung 3) ist die gemeldete Canvas-Größe bekannt; die genaue Ursache der Abweichung zum sichtbaren Bildschirm war damit noch nicht eindeutig bestimmt. Die neue Höhenstrategie ist automatisiert abgesichert, muss aber nach Veröffentlichung auf dem betroffenen Gerät bestätigt werden.
