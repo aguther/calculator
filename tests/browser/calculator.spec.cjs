@@ -66,6 +66,7 @@ test('complete second build updates both tabs and remains available offline',asy
   expect(navigations).toBe(0);
   await request.post('/__test/release-next');
   await expect(page.locator('#update')).toBeVisible();
+  await expect.poll(()=>page.locator('#update img').evaluate(img=>img.complete && img.naturalWidth>0)).toBe(true);
   expect(navigations).toBe(0);expect(await page.evaluate(()=>navigator.serviceWorker.controller===window.__controllerBeforeUpdate)).toBe(true);
   expect(await page.evaluate(()=>caches.keys())).toContain(old[0]);
   await page.locator('canvas').focus();await page.keyboard.type('+10=');await expect(page.locator('#calculator-status')).toContainText('1:00');
