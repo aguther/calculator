@@ -4,7 +4,7 @@ const fixtures = [];
 for (const entry of ['', '0','45','145','1230','1:2','1::15','-145','999999999','99:99:99']) {
  fixtures.push({kind:'parse',input:entry,expected:core.entryToSeconds(entry)});
 }
-for (const n of [0,-0.5,-1.5,0.5,59.5,-2700,3600,3615,1.2345675,-1.2345675,999999999999,1e21,1e-7]) {
+for (const n of [0,-0.5,-1.5,0.5,59.5,-2700,3600,3615,1.2345675,-1.2345675,999999999999,1e21,1e-7,4503599627370497,4503599627.370497]) {
  fixtures.push({kind:'time',input:n,expected:core.fmtSeconds(n)});
  fixtures.push({kind:'number',input:n,expected:core.fmtNum(n)});
 }

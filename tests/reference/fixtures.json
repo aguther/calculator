@@ -180,6 +180,26 @@
     "expected": "0"
   },
   {
+    "kind": "time",
+    "input": 4503599627370497,
+    "expected": "1 250 999 896 491:48:17"
+  },
+  {
+    "kind": "number",
+    "input": 4503599627370497,
+    "expected": "4 503 599 627 370 497"
+  },
+  {
+    "kind": "time",
+    "input": 4503599627.370497,
+    "expected": "1 250 999:53:47"
+  },
+  {
+    "kind": "number",
+    "input": 4503599627.370497,
+    "expected": "4 503 599 627.370497"
+  },
+  {
     "kind": "evaluate",
     "input": [
       {

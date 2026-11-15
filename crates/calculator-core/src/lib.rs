@@ -76,7 +76,8 @@ impl Action {
     }
 }
 fn js_round(n: f64) -> f64 {
-    (n + 0.5).floor()
+    let floor = n.floor();
+    if n - floor >= 0.5 { floor + 1.0 } else { floor }
 }
 fn group(s: &str) -> String {
     let mut out = String::new();
