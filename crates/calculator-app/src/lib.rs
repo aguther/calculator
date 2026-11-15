@@ -714,7 +714,27 @@ impl CalculatorApp {
         ui.painter().rect_filled(rect, 16.0, self.theme.panel());
         let inset = rect.shrink(5.0);
         let info_width = inset.height();
-        let segment_width = (inset.width() - info_width - 8.0) * 0.5;
+        #[cfg(target_arch = "wasm32")]
+        if let Some(window) = web_sys::window()
+            && let Some(document) = window.document()
+            && let Some(button) = document.get_element_by_id("update")
+            && let Some(canvas) = document.get_element_by_id("calculator-canvas")
+        {
+            let bounds = canvas.get_bounding_client_rect();
+            let scale = bounds.width() as f32 / ui.ctx().content_rect().width();
+            let x = bounds.left() as f32 + (inset.right() - info_width - 40.0) * scale;
+            let y = bounds.top() as f32 + (rect.center().y - 16.0) * scale;
+            let visibility = if self.settings_open {
+                "hidden"
+            } else {
+                "visible"
+            };
+            let _ = button.set_attribute(
+                "style",
+                &format!("left:{x}px;top:{y}px;visibility:{visibility}"),
+            );
+        }
+        let segment_width = (inset.width() - info_width - 48.0) * 0.5;
         for (index, mode, label) in [(0, Mode::Time, "Zeit"), (1, Mode::Number, "Rechner")] {
             let r = egui::Rect::from_min_size(
                 egui::pos2(inset.left() + index as f32 * segment_width, inset.top()),
@@ -921,7 +941,7 @@ impl CalculatorApp {
     }
     fn calculator_ui(&mut self, ui: &mut egui::Ui, width: f32, height: f32) {
         let l = layout(width, height);
-        let size = Vec2::new(l.content_width, height.min(860.0));
+        let size = Vec2::new(l.content_width, height);
         let rect = egui::Rect::from_min_size(
             ui.min_rect().min + Vec2::new((width - size.x) * 0.5, (height - size.y) * 0.5),
             size,
@@ -966,25 +986,45 @@ impl CalculatorApp {
             return;
         }
         let mut open = true;
-        egui::Window::new("Informationen und Einstellungen").open(&mut open).collapsible(false).resizable(false).default_width(280.0).show(ctx,|ui|{
-            ui.heading("Zeitrechner");let short_commit=COMMIT.chars().take(12).collect::<String>();
-                ui.label(format!("Calculator {VERSION} · {short_commit}"));ui.separator();
-            ui.label("Theme");
-            for theme in [Theme::Original,Theme::Light,Theme::Dark]{if ui.selectable_value(&mut self.theme,theme,theme.label()).changed(){self.theme.apply(ctx);self.dirty=true;}}
-            if ui.checkbox(&mut self.sound,"Tastenklicks").changed(){self.dirty=true;}
-            if ui.add_enabled(crate::feedback::supports_haptics(),egui::Checkbox::new(&mut self.haptics,"Haptik")).on_disabled_hover_text("Dieser Browser bzw. dieses Gerät unterstützt keine Vibration.").changed(){self.dirty=true;}
-            if ui.checkbox(&mut self.history_right,"Verlauf rechts (Querformat)").changed(){self.dirty=true;}
-            ui.separator();ui.label("Tastatur: Ziffern, + − * /, Klammern, Enter, Rücktaste. Escape löscht alles; Entf löscht die Eingabe. Punkt/Komma fügt im Zeitmodus einen Doppelpunkt ein.");
-            ui.label("Berechnungen und Einstellungen bleiben auf diesem Gerät.");
-            ui.collapsing("Diagnose",|ui|{
-                let size=ctx.content_rect().size();
-                let report=serde_json::json!({"version":VERSION,"commit":COMMIT,"target":std::env::consts::ARCH,"viewport":{"width":size.x,"height":size.y,"pixelsPerPoint":ctx.pixels_per_point()},"theme":self.theme});
-                let text=serde_json::to_string_pretty(&report).unwrap_or_default();
-                ui.label(egui::RichText::new(&text).monospace().small());
-                if ui.button("Diagnose kopieren").clicked(){ctx.copy_text(text);}
+        let width = (ctx.content_rect().width() - 48.0).clamp(220.0, 360.0);
+        egui::Window::new("Informationen und Einstellungen")
+            .open(&mut open).title_bar(false).collapsible(false).resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER,Vec2::ZERO)
+            .default_width(width)
+            .max_width(width)
+            .max_height((ctx.content_rect().height()-100.0).max(160.0))
+            .vscroll(true)
+            .frame(egui::Frame::new().fill(self.theme.panel()).inner_margin(18.0).corner_radius(20.0))
+            .show(ctx,|ui|{
+                ui.spacing_mut().item_spacing=Vec2::splat(12.0);
+                ui.label(RichText::new("Einstellungen").font(bold_font(23.0)));
+                ui.label(RichText::new(format!("Calculator {VERSION} · {}",COMMIT.chars().take(12).collect::<String>())).small().weak());
+                ui.add_space(4.0);
+                ui.label(RichText::new("Darstellung").font(bold_font(15.0)));
+                ui.horizontal(|ui|{
+                    let width=(ui.available_width()-16.0)/3.0;
+                    for theme in [Theme::Original,Theme::Light,Theme::Dark] {
+                        let selected=self.theme==theme;
+                        if ui.add_sized([width,40.0],egui::Button::new(RichText::new(theme.label()).font(bold_font(14.0)).color(if selected {Color32::from_rgb(20,20,22)}else{ui.visuals().text_color()})).fill(if selected {self.theme.accent()}else{self.theme.surface()}).corner_radius(12.0)).clicked(){self.theme=theme;self.theme.apply(ctx);self.dirty=true;}
+                    }
+                });
+                egui::Frame::new().fill(self.theme.surface()).inner_margin(12.0).corner_radius(12.0).show(ui,|ui|{
+                    ui.set_min_width(width-24.0);
+                    if ui.checkbox(&mut self.history_right,"Verlauf rechts im Querformat").changed(){self.dirty=true;}
+                    if ui.checkbox(&mut self.sound,"Tastenklicks").changed(){self.dirty=true;}
+                    if ui.add_enabled(crate::feedback::supports_haptics(),egui::Checkbox::new(&mut self.haptics,"Haptik")).changed(){self.dirty=true;}
+                    if !crate::feedback::supports_haptics(){ui.label(RichText::new("Vibration wird auf diesem Gerät nicht unterstützt.").small().weak());}
+                });
+                ui.collapsing("Bedienung",|ui|{ui.label("Ziffern, + − * /, Klammern und Enter. Rücktaste löscht eine Stelle, Escape alles und Entf die Eingabe.");});
+                ui.collapsing("Diagnose",|ui|{
+                    let size=ctx.content_rect().size();
+                    let text=serde_json::to_string_pretty(&serde_json::json!({"version":VERSION,"commit":COMMIT,"viewport":{"width":size.x,"height":size.y,"pixelsPerPoint":ctx.pixels_per_point()},"theme":self.theme})).unwrap_or_default();
+                    ui.label(RichText::new(&text).monospace().small());
+                    if ui.button("Diagnose kopieren").clicked(){ctx.copy_text(text);}
+                });
+                ui.label(RichText::new("Berechnungen und Einstellungen bleiben auf diesem Gerät.").small().weak());
+                if ui.add_sized([ui.available_width(),42.0],egui::Button::new(RichText::new("Fertig").font(bold_font(15.0))).fill(self.theme.surface()).corner_radius(12.0)).clicked(){self.settings_open=false;}
             });
-            if ui.button("Schließen").clicked(){self.settings_open=false;}
-        });
         if !open {
             self.settings_open = false;
         }
@@ -1095,6 +1135,7 @@ mod rendering_tests {
     fn history_side_moves_the_panel_and_keeps_keys_bounded() {
         for (width, height) in [
             (1440.0, 900.0),
+            (390.0, 1100.0),
             (844.0, 390.0),
             (568.0, 320.0),
             (400.0, 760.0),
