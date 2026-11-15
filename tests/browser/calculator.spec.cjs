@@ -150,3 +150,11 @@ test('sound context is created inside a real pointer gesture',async({page})=>{
  await expect.poll(()=>page.evaluate(()=>window.audioGestures.length)).toBe(1);
  expect(await page.evaluate(()=>window.audioGestures[0])).toBe(true);
 });
+
+test('opaque iOS reference viewport uses height without a second top inset',async({page})=>{
+ await page.setViewportSize({width:402,height:812});await ready(page);
+ await page.evaluate(()=>{const s=document.documentElement.style;s.setProperty('--safe-top','0px');s.setProperty('--safe-bottom','34px');});
+ await expect.poll(async()=>{const rect=await page.locator('canvas').boundingBox();return [rect.y,rect.height];}).toEqual([0,778]);
+ await page.locator('canvas').focus();await page.keyboard.type('1+2');await expect(page.locator('#calculator-status')).toContainText('0:02');
+ await page.mouse.click(352,743);await expect(page.locator('#calculator-status')).toContainText('0:03');
+});

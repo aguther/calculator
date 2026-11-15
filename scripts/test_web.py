@@ -40,6 +40,17 @@ class WebBuildTests(unittest.TestCase):
             self.assertEqual(effective_cache(headers, '/app-abcdef1234_bg.wasm'), 'public, max-age=31536000, immutable')
             self.assertEqual(effective_cache(headers, '/sw.js'), 'no-cache, no-store, must-revalidate')
             self.assertEqual(effective_cache(headers, '/index.html'), 'public, max-age=0, must-revalidate')
+    def test_ios_status_bar_matches_working_web_version(self):
+        from html.parser import HTMLParser
+        class MetaParser(HTMLParser):
+            def handle_starttag(parser, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'meta' and attrs.get('name') == 'apple-mobile-web-app-status-bar-style':
+                    parser.status_bar = attrs.get('content')
+        parser = MetaParser()
+        parser.feed((ROOT/'index.html').read_text(encoding='utf-8'))
+        self.assertEqual(parser.status_bar, 'black')
+
     def test_tag_only_publication(self):
         text=(ROOT/'.github/workflows/release.yml').read_text()
         self.assertIn('tags:',text)
