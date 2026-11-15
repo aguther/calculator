@@ -137,3 +137,15 @@ test('settings done button remains clickable after scrolling',async({page})=>{
  await page.mouse.click(200,666);await page.locator('canvas').focus();await page.keyboard.type('25+36=');
  await expect(page.locator('#calculator-status')).toContainText('1:01');
 });
+
+test('sound context is created inside a real pointer gesture',async({page})=>{
+ await page.setViewportSize({width:400,height:760});
+ await page.addInitScript(()=>{
+  localStorage.setItem('calculator-v1',JSON.stringify({sound:true}));window.audioGestures=[];
+  for(const name of ['AudioContext','webkitAudioContext']){const Audio=window[name];if(Audio)window[name]=new Proxy(Audio,{construct(target,args){window.audioGestures.push(navigator.userActivation?.isActive);return Reflect.construct(target,args);}});}
+ });
+ await ready(page);test.skip(!await page.evaluate(()=>!!(window.AudioContext||window.webkitAudioContext)),'This browser runtime does not provide Web Audio; gesture and failure paths have separate unit tests');expect(await page.evaluate(()=>window.audioGestures)).toEqual([]);
+ await page.mouse.click(55,500);await expect(page.locator('#calculator-status')).toContainText('0:07');
+ await expect.poll(()=>page.evaluate(()=>window.audioGestures.length)).toBe(1);
+ expect(await page.evaluate(()=>window.audioGestures[0])).toBe(true);
+});

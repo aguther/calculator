@@ -1105,6 +1105,8 @@ impl eframe::App for CalculatorApp {
                 self.calculator_ui(ui, width, height);
             });
         self.settings(ctx);
+        #[cfg(target_arch = "wasm32")]
+        crate::feedback::configure_sound(self.sound);
         if self.settings_open {
             self.touch.cancel();
         } else {

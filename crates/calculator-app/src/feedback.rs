@@ -17,22 +17,16 @@ pub fn click() {
     }
 }
 #[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen(module = "/src/audio.js")]
+extern "C" {
+    #[wasm_bindgen::prelude::wasm_bindgen(js_name = configureSound)]
+    pub fn configure_sound(enabled: bool);
+    #[wasm_bindgen::prelude::wasm_bindgen(js_name = playClick)]
+    fn play_click();
+}
+#[cfg(target_arch = "wasm32")]
 pub fn click() {
-    use web_sys::AudioContext;
-    thread_local! {static AUDIO:Option<AudioContext>=AudioContext::new().ok();}
-    AUDIO.with(|audio| {
-        if let Some(audio) = audio {
-            let _ = audio.resume();
-            if let (Ok(osc), Ok(gain)) = (audio.create_oscillator(), audio.create_gain()) {
-                osc.frequency().set_value(900.0);
-                gain.gain().set_value(0.04);
-                let _ = osc.connect_with_audio_node(&gain);
-                let _ = gain.connect_with_audio_node(&audio.destination());
-                let _ = osc.start();
-                let _ = osc.stop_with_when(audio.current_time() + 0.012);
-            }
-        }
-    });
+    play_click();
 }
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen(inline_js = "
