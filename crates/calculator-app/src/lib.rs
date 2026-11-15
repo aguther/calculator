@@ -14,6 +14,7 @@ pub enum Theme {
     Dark,
 }
 impl Theme {
+    pub const ALL: &[Self] = &[Self::Original, Self::Light, Self::Dark];
     pub fn background(self) -> Color32 {
         match self {
             Self::Original => Color32::from_rgb(12, 12, 14),
@@ -134,6 +135,60 @@ pub fn layout(width: f32, height: f32) -> Layout {
         gap,
         landscape,
     }
+}
+fn settings_switch(ui: &mut egui::Ui, value: &mut bool, label: &str, enabled: bool) -> bool {
+    ui.add_enabled_ui(enabled, |ui| {
+        let (rect, mut response) =
+            ui.allocate_exact_size(Vec2::new(ui.available_width(), 44.0), egui::Sense::click());
+        if response.clicked() {
+            *value = !*value;
+            response.mark_changed();
+        }
+        response.widget_info(|| {
+            egui::WidgetInfo::selected(egui::WidgetType::Checkbox, enabled, *value, label)
+        });
+        let amount = ui.ctx().animate_bool(response.id, *value);
+        let track = egui::Rect::from_center_size(
+            egui::pos2(rect.right() - 25.0, rect.center().y),
+            Vec2::new(50.0, 30.0),
+        );
+        let off = ui.visuals().weak_text_color().gamma_multiply(0.35);
+        let on = Color32::from_rgb(48, 178, 91);
+        let fill = if *value { on } else { off };
+        ui.painter().rect_filled(
+            track,
+            15.0,
+            fill.gamma_multiply(if enabled { 1.0 } else { 0.35 }),
+        );
+        ui.painter().circle_filled(
+            egui::pos2(track.left() + 15.0 + 20.0 * amount, track.center().y),
+            12.0,
+            if enabled {
+                Color32::WHITE
+            } else {
+                Color32::GRAY
+            },
+        );
+        paint_text(
+            ui,
+            egui::Rect::from_min_max(rect.min, egui::pos2(track.left() - 12.0, rect.bottom())),
+            label,
+            14.0,
+            ui.visuals().text_color(),
+            false,
+            egui::Align::Min,
+        );
+        if response.has_focus() {
+            ui.painter().rect_stroke(
+                track.expand(3.0),
+                18.0,
+                egui::Stroke::new(2.0_f32, ui.visuals().selection.stroke.color),
+                egui::StrokeKind::Outside,
+            );
+        }
+        response.changed()
+    })
+    .inner
 }
 fn bold_font(size: f32) -> egui::FontId {
     egui::FontId::new(size, egui::FontFamily::Name("semibold".into()))
@@ -1001,18 +1056,18 @@ impl CalculatorApp {
                 ui.label(RichText::new(format!("Calculator {VERSION} · {}",COMMIT.chars().take(12).collect::<String>())).small().weak());
                 ui.add_space(4.0);
                 ui.label(RichText::new("Darstellung").font(bold_font(15.0)));
-                ui.horizontal(|ui|{
-                    let width=(ui.available_width()-16.0)/3.0;
-                    for theme in [Theme::Original,Theme::Light,Theme::Dark] {
+                ui.horizontal_wrapped(|ui|{
+                    let width=((ui.available_width()-12.0)/2.0).max(96.0);
+                    for &theme in Theme::ALL {
                         let selected=self.theme==theme;
                         if ui.add_sized([width,40.0],egui::Button::new(RichText::new(theme.label()).font(bold_font(14.0)).color(if selected {Color32::from_rgb(20,20,22)}else{ui.visuals().text_color()})).fill(if selected {self.theme.accent()}else{self.theme.surface()}).corner_radius(12.0)).clicked(){self.theme=theme;self.theme.apply(ctx);self.dirty=true;}
                     }
                 });
                 egui::Frame::new().fill(self.theme.surface()).inner_margin(12.0).corner_radius(12.0).show(ui,|ui|{
                     ui.set_min_width(width-24.0);
-                    if ui.checkbox(&mut self.history_right,"Verlauf rechts im Querformat").changed(){self.dirty=true;}
-                    if ui.checkbox(&mut self.sound,"Tastenklicks").changed(){self.dirty=true;}
-                    if ui.add_enabled(crate::feedback::supports_haptics(),egui::Checkbox::new(&mut self.haptics,"Haptik")).changed(){self.dirty=true;}
+                    if settings_switch(ui,&mut self.history_right,"Verlauf rechts im Querformat",true){self.dirty=true;}
+                    if settings_switch(ui,&mut self.sound,"Tastenklicks",true){self.dirty=true;}
+                    if settings_switch(ui,&mut self.haptics,"Haptik",crate::feedback::supports_haptics()){self.dirty=true;}
                     if !crate::feedback::supports_haptics(){ui.label(RichText::new("Vibration wird auf diesem Gerät nicht unterstützt.").small().weak());}
                 });
                 ui.collapsing("Bedienung",|ui|{ui.label("Ziffern, + − * /, Klammern und Enter. Rücktaste löscht eine Stelle, Escape alles und Entf die Eingabe.");});
