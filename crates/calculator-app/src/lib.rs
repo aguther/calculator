@@ -600,7 +600,7 @@ impl CalculatorApp {
             ui.label("Theme");
             for theme in [Theme::Original,Theme::Light,Theme::Dark]{if ui.selectable_value(&mut self.theme,theme,theme.label()).changed(){self.theme.apply(ctx);self.dirty=true;}}
             if ui.checkbox(&mut self.sound,"Tastenklicks").changed(){self.dirty=true;}
-            if ui.checkbox(&mut self.haptics,"Haptik (wo unterstützt)").changed(){self.dirty=true;}
+            if ui.add_enabled(crate::feedback::supports_haptics(),egui::Checkbox::new(&mut self.haptics,"Haptik")).on_disabled_hover_text("Dieser Browser bzw. dieses Gerät unterstützt keine Vibration.").changed(){self.dirty=true;}
             if ui.checkbox(&mut self.history_right,"Verlauf rechtsbündig").changed(){self.dirty=true;}
             ui.separator();ui.label("Tastatur: Ziffern, + − * /, Klammern, Enter, Rücktaste. Escape löscht alles; Entf löscht die Eingabe. Punkt/Komma fügt im Zeitmodus einen Doppelpunkt ein.");
             ui.label("Berechnungen und Einstellungen bleiben auf diesem Gerät.");
