@@ -14,3 +14,15 @@ test('update activates only when requested and cleans only calculator caches',as
  w.events.message({data:{type:'ACTIVATE_UPDATE'}});assert.equal(w.skipped(),true);
  w.events.activate({waitUntil:p=>completion=p});await completion;assert.deepEqual(w.deleted,['calculator-old']);
 });
+
+
+test('navigation unwraps a cached index redirect from a static host',async()=>{
+ const events={};const redirected=new Response('<html>calculator</html>',{headers:{'Content-Type':'text/html'}});
+ Object.defineProperty(redirected,'redirected',{value:true});
+ const caches={open:async()=>({match:async key=>key==='/index.html'?redirected:undefined})};
+ const self={addEventListener:(name,handler)=>events[name]=handler,location:{origin:'https://example.test'}};
+ vm.runInNewContext(fs.readFileSync('web/sw.template.js','utf8').replace('__VERSION__','"next"').replace('__ASSETS__','[]'),{self,caches,URL,Response,fetch:async()=>{throw Error('Offline');}});
+ let completion;events.fetch({request:{method:'GET',url:'https://example.test/',mode:'navigate'},respondWith:p=>completion=p});
+ const result=await completion;assert.equal(result.redirected,false);assert.equal(result.status,200);
+ assert.equal(result.headers.get('Content-Type'),'text/html');assert.equal(await result.text(),'<html>calculator</html>');
+});
