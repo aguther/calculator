@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c0c0e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><title>Calculator · Zeitrechner</title>
+<link data-trunk rel="rust" href="crates/calculator-app/Cargo.toml" data-bin="calculator" data-wasm-opt="0">
+<link data-trunk rel="copy-dir" href="web">
+<link rel="manifest" href="web/manifest.webmanifest"><link rel="icon" href="web/icon-192.png"><link rel="apple-touch-icon" href="web/icon-192.png"><link rel="stylesheet" href="web/app.css">
+<script type="module" src="web/app.js"></script></head><body>
+<main><canvas id="calculator-canvas" tabindex="0" aria-label="Zeit- und Zahlenrechner. Bedienung mit Ziffern, Rechenzeichen und Enter."></canvas><p id="loading" role="status">Calculator wird geladen …</p><output id="calculator-status" class="sr-only" aria-live="polite" aria-atomic="true"></output></main>
+<button id="update" hidden>Neue Version verfügbar · neu starten</button>
+<noscript>Für Calculator müssen JavaScript und WebAssembly aktiviert sein.</noscript>
+</body></html>

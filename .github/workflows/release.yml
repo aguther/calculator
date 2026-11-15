@@ -1,0 +1,75 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate stable version and main ancestry
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python scripts/verify-release.py "$RELEASE_TAG"
+  build:
+    needs: verify
+    uses: ./.github/workflows/ci.yml
+  publish:
+    concurrency:
+      group: calculator-production
+      cancel-in-progress: false
+    needs: [verify, build]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-x64
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-x64
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: web
+          path: dist
+      - run: python scripts/checksums.py
+      - name: Create or resume GitHub release without overwriting assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python scripts/publish-release.py "$RELEASE_TAG"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Deploy the verified PWA artifact
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --no-install wrangler deploy
+      - name: Finalize GitHub release after successful deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release edit "$RELEASE_TAG" --draft=false
