@@ -1,5 +1,6 @@
 import pathlib,sys,tarfile,tomllib,zipfile
 from licenses import collect
+from windows_binary import verify_standalone
 root=pathlib.Path(__file__).resolve().parents[1]
 version=tomllib.loads((root/'Cargo.toml').read_text())['workspace']['package']['version']
 platform=sys.argv[1]
@@ -12,6 +13,7 @@ license_path.parent.mkdir(exist_ok=True)
 license_path.write_text(collect(),encoding='utf-8')
 files=[(license_path,'THIRD_PARTY_LICENSES.txt'),(root/'target/release'/exe,exe),(root/'LICENSE','LICENSE'),(root/'docs/desktop.md','README.md')]
 if platform=='windows-x64':
+    verify_standalone(root/'target/release'/exe)
     with zipfile.ZipFile(out/(name+'.zip'),'w',compression=zipfile.ZIP_DEFLATED) as archive:
         for path,filename in files:archive.write(path,name+'/'+filename)
 else:
