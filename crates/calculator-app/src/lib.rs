@@ -94,6 +94,8 @@ pub struct CalculatorApp {
     #[serde(skip)]
     last_status: String,
     #[serde(skip)]
+    last_saved: Option<String>,
+    #[serde(skip)]
     touch: touch::TouchController,
     #[serde(skip)]
     targets: Vec<touch::Target>,
@@ -113,6 +115,7 @@ impl Default for CalculatorApp {
             settings_open: false,
             dirty: false,
             last_status: String::new(),
+            last_saved: None,
             touch: touch::TouchController::default(),
             targets: Vec::new(),
             touch_frame: false,
@@ -122,13 +125,21 @@ impl Default for CalculatorApp {
 }
 impl CalculatorApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let mut app: Self = cc
+        let stored = cc
             .storage
-            .and_then(|s| s.get_string("calculator-v1"))
-            .and_then(|s| serde_json::from_str(&s).ok())
+            .and_then(|storage| storage.get_string("calculator-v1"));
+        let app = Self::restore(stored.as_deref());
+        app.theme.apply(&cc.egui_ctx);
+        app
+    }
+    fn restore(data: Option<&str>) -> Self {
+        let mut app: Self = data
+            .and_then(|data| serde_json::from_str(data).ok())
             .unwrap_or_default();
         app.calculator.validate();
-        app.theme.apply(&cc.egui_ctx);
+        if data.is_some() {
+            app.last_saved = serde_json::to_string(&app).ok();
+        }
         app
     }
     pub fn dispatch(&mut self, action: Action) {
@@ -769,8 +780,12 @@ impl eframe::App for CalculatorApp {
         }
     }
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        if let Ok(data) = serde_json::to_string(self) {
-            storage.set_string("calculator-v1", data);
+        if let Ok(data) = serde_json::to_string(self)
+            && self.last_saved.as_ref() != Some(&data)
+        {
+            // An unchanged tab must not overwrite another tab during an update/reload.
+            storage.set_string("calculator-v1", data.clone());
+            self.last_saved = Some(data);
         }
     }
     fn auto_save_interval(&self) -> Duration {
@@ -976,6 +991,41 @@ mod history_alignment_tests {
                 "Setting has no visible effect: {right:?} vs {left:?}"
             );
         }
+    }
+    #[test]
+    fn unchanged_tab_does_not_overwrite_newer_calculation_on_update() {
+        #[derive(Default)]
+        struct Memory {
+            data: std::collections::HashMap<String, String>,
+        }
+        impl eframe::Storage for Memory {
+            fn get_string(&self, key: &str) -> Option<String> {
+                self.data.get(key).cloned()
+            }
+            fn set_string(&mut self, key: &str, value: String) {
+                self.data.insert(key.into(), value);
+            }
+            fn flush(&mut self) {}
+        }
+        use eframe::{App, Storage};
+        let mut storage = Memory::default();
+        let mut stale = CalculatorApp::default();
+        for c in "45=".chars() {
+            stale.dispatch(Action::from_char(c).unwrap());
+        }
+        stale.save(&mut storage);
+        let mut restored_stale =
+            CalculatorApp::restore(storage.get_string("calculator-v1").as_deref());
+        let mut active = CalculatorApp::restore(storage.get_string("calculator-v1").as_deref());
+        for c in "+15=".chars() {
+            active.dispatch(Action::from_char(c).unwrap());
+        }
+        active.save(&mut storage);
+        stale.save(&mut storage);
+        restored_stale.save(&mut storage);
+        let restored: CalculatorApp =
+            serde_json::from_str(&storage.get_string("calculator-v1").unwrap()).unwrap();
+        assert_eq!(restored.calculator.current_text(), "1:00");
     }
     #[test]
     fn new_installations_default_to_right_aligned_history() {

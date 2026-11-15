@@ -52,24 +52,34 @@ test('complete second build updates both tabs and remains available offline',asy
   await ready(page);await page.keyboard.type('45');await page.keyboard.press('Enter');
   await expect(page.locator('#calculator-status')).toContainText('0:45');
   await expect.poll(()=>page.evaluate(()=>!!navigator.serviceWorker.controller)).toBe(true);
-  const old=await page.evaluate(()=>caches.keys());
+  const old=await page.evaluate(()=>{window.__controllerBeforeUpdate=navigator.serviceWorker.controller;return caches.keys();});
+  let navigations=0;page.on('framenavigated',frame=>{if(frame===page.mainFrame())navigations++;});
   const second=await context.newPage();await second.goto('/');await expect(second.locator('#loading')).toHaveCount(0);
   // Headed Firefox suspends animation frames in the background tab.
   // Foreground the page before Playwright waits for stable clickable geometry.
   await page.bringToFront();
-  await request.post('/__test/build-next');
-  await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;await r.update();});
-  await expect(page.locator('#update')).toBeVisible();await expect.poll(async()=>{const box=await page.locator('canvas').boundingBox();return box.height;}).toBeLessThan(720);await Promise.all([
+  await request.post('/__test/hold-next');
+  await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;void r.update();});
+  await expect.poll(()=>page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();return r.installing?.state;})).toBe('installing');
+  await expect(page.locator('#update')).toBeHidden();
+  await page.locator('canvas').focus();await page.keyboard.type('+5=');await expect(page.locator('#calculator-status')).toContainText('0:50');
+  expect(navigations).toBe(0);
+  await request.post('/__test/release-next');
+  await expect(page.locator('#update')).toBeVisible();
+  expect(navigations).toBe(0);expect(await page.evaluate(()=>navigator.serviceWorker.controller===window.__controllerBeforeUpdate)).toBe(true);
+  expect(await page.evaluate(()=>caches.keys())).toContain(old[0]);
+  await page.locator('canvas').focus();await page.keyboard.type('+10=');await expect(page.locator('#calculator-status')).toContainText('1:00');
+  await expect.poll(async()=>{const box=await page.locator('canvas').boundingBox();return box.height;}).toBeLessThan(720);await Promise.all([
    page.waitForEvent('framenavigated',{predicate:frame=>frame===page.mainFrame(),timeout:15000}),
    second.waitForEvent('framenavigated',{predicate:frame=>frame===second.mainFrame(),timeout:15000}),
    page.locator('#update').click()
   ]);
   await expect.poll(()=>page.evaluate(()=>caches.keys()).catch(()=>old)).not.toEqual(old);
   await expect(page.locator('#loading')).toHaveCount(0);await expect(second.locator('#loading')).toHaveCount(0);
-  await expect(page.locator('#calculator-status')).toContainText('0:45');
+  await expect(page.locator('#calculator-status')).toContainText('1:00');
   await second.bringToFront();await context.setOffline(true);await second.reload({waitUntil:'domcontentloaded',timeout:15000});await expect(second.locator('#loading')).toHaveCount(0);
-  await expect(second.locator('#calculator-status')).toContainText('0:45');await context.setOffline(false);
- } finally {await request.post('/__test/build-current',{timeout:5000}).catch(error=>console.warn('Test server reset failed:',error.message));}
+  await expect(second.locator('#calculator-status')).toContainText('1:00');await context.setOffline(false);
+ } finally {await request.post('/__test/release-next',{timeout:5000}).catch(()=>{});await request.post('/__test/build-current',{timeout:5000}).catch(error=>console.warn('Test server reset failed:',error.message));}
 });
 
 test('overlapping touches commit in release order and canceled contacts do nothing',async({browser,browserName})=>{
