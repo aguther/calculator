@@ -6,7 +6,7 @@ Ein Grafiktreiber mit OpenGL >= 2.0 ist erforderlich.
 Die Windows-Version bindet die C-Laufzeit statisch ein; die Paketierung prüft
 die tatsächlichen DLL-Importe und lehnt separate VC-Runtime-Abhängigkeiten ab.
 Linux: x64, glibc >= 2.35 (Ubuntu 22.04 oder neuer), OpenGL, X11 oder Wayland,
-libxkbcommon und ALSA. Beispiel Ubuntu: libgl1 libxkbcommon0 libasound2 sowie
+libxkbcommon und ALSA. Beispiel Ubuntu: libgl1 libxkbcommon0 libxkbcommon-x11-0 libasound2 sowie
 libx11-6 libxi6 libxcursor1 libxrandr2 oder libwayland-client0.
 Eine grafische Sitzung und ein funktionierender Grafiktreiber sind erforderlich.
 

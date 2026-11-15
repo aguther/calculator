@@ -469,7 +469,8 @@ impl CalculatorApp {
         }
         let mut open = true;
         egui::Window::new("Informationen und Einstellungen").open(&mut open).collapsible(false).resizable(false).default_width(280.0).show(ctx,|ui|{
-            ui.heading("Zeitrechner");ui.label(format!("Calculator {VERSION} · {COMMIT}"));ui.separator();
+            ui.heading("Zeitrechner");let short_commit=COMMIT.chars().take(12).collect::<String>();
+                ui.label(format!("Calculator {VERSION} · {short_commit}"));ui.separator();
             ui.label("Theme");
             for theme in [Theme::Original,Theme::Light,Theme::Dark]{if ui.selectable_value(&mut self.theme,theme,theme.label()).changed(){self.theme.apply(ctx);self.dirty=true;}}
             if ui.checkbox(&mut self.sound,"Tastenklicks").changed(){self.dirty=true;}
