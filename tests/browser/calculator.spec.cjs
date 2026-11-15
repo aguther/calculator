@@ -99,3 +99,15 @@ test('overlapping touches commit in release order and canceled contacts do nothi
   await page.waitForTimeout(50);await expect(page.locator('#calculator-status')).toContainText('0:00');
  }finally{await context.close();}
 });
+
+for(const capability of ['missing','throws']){
+ test(`haptics ${capability} never interrupts calculation`,async({page})=>{
+  await page.addInitScript(capability=>{
+   localStorage.setItem('calculator-v1',JSON.stringify({haptics:true}));
+   Object.defineProperty(navigator,'vibrate',{configurable:true,value:capability==='missing'?undefined:()=>{throw new Error('Vibration unavailable');}});
+  },capability);
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await ready(page);await page.keyboard.type('25+36=');
+  await expect(page.locator('#calculator-status')).toContainText('1:01');expect(errors).toEqual([]);
+ });
+}

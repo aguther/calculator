@@ -34,9 +34,30 @@ pub fn click() {
         }
     });
 }
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen(inline_js = "
+export function hapticsSupported() {
+    try { return typeof navigator.vibrate === 'function'; } catch (_) { return false; }
+}
+export function vibrateSafely() {
+    try { if (typeof navigator.vibrate === 'function') navigator.vibrate(8); } catch (_) {}
+}
+")]
+extern "C" {
+    #[wasm_bindgen::prelude::wasm_bindgen(js_name = hapticsSupported)]
+    fn haptics_supported() -> bool;
+    #[wasm_bindgen::prelude::wasm_bindgen(js_name = vibrateSafely)]
+    fn vibrate_safely();
+}
+
+pub fn supports_haptics() -> bool {
+    #[cfg(target_arch = "wasm32")]
+    return haptics_supported();
+    #[cfg(not(target_arch = "wasm32"))]
+    false
+}
+
 pub fn vibrate() {
     #[cfg(target_arch = "wasm32")]
-    if let Some(window) = web_sys::window() {
-        window.navigator().vibrate_with_duration(8);
-    }
+    vibrate_safely();
 }
