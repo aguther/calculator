@@ -19,6 +19,27 @@ class WebBuildTests(unittest.TestCase):
             self.assertEqual(first,module.finalize(dist))
             (dist/'app-abcdef1234_bg.wasm').write_bytes(b'next version')
             self.assertNotEqual(first,module.finalize(dist))
+    def test_cloudflare_cache_directives_do_not_conflict(self):
+        import fnmatch
+        def effective_cache(text, url):
+            pattern = None
+            values = []
+            for line in text.splitlines():
+                if line and not line.startswith(' '): pattern = line
+                elif pattern and fnmatch.fnmatchcase(url, pattern):
+                    header = line.strip()
+                    if header == '! Cache-Control': values = []
+                    elif header.startswith('Cache-Control:'): values.append(header.split(':', 1)[1].strip())
+            return ', '.join(values)
+        with tempfile.TemporaryDirectory() as temp:
+            dist = pathlib.Path(temp)
+            (dist/'index.html').write_text('<html></html>')
+            (dist/'app-abcdef1234_bg.wasm').write_bytes(b'wasm')
+            module.finalize(dist)
+            headers = (dist/'_headers').read_text()
+            self.assertEqual(effective_cache(headers, '/app-abcdef1234_bg.wasm'), 'public, max-age=31536000, immutable')
+            self.assertEqual(effective_cache(headers, '/sw.js'), 'no-cache, no-store, must-revalidate')
+            self.assertEqual(effective_cache(headers, '/index.html'), 'public, max-age=0, must-revalidate')
     def test_tag_only_publication(self):
         text=(ROOT/'.github/workflows/release.yml').read_text()
         self.assertIn('tags:',text)

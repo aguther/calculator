@@ -25,7 +25,7 @@ def finalize(dist):
     (dist / 'sw.js').write_text(template.replace('__VERSION__', json.dumps(version)).replace('__ASSETS__', json.dumps(assets)), encoding='utf-8')
     headers = (ROOT / '_headers').read_text(encoding='utf-8')
     for asset in assets:
-        if re.search(r'-[a-f0-9]{8,}',asset): headers += f'{asset}\n  Cache-Control: public, max-age=31536000, immutable\n'
+        if re.search(r'-[a-f0-9]{8,}',asset): headers += f'{asset}\n  ! Cache-Control\n  Cache-Control: public, max-age=31536000, immutable\n'
     (dist / '_headers').write_text(headers, encoding='utf-8')
     (dist / 'build-info.json').write_text(json.dumps({'build':version,'assets':assets}, indent=2)+'\n', encoding='utf-8')
     return version

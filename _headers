@@ -6,4 +6,5 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cache-Control: public, max-age=0, must-revalidate
 /sw.js
+  ! Cache-Control
   Cache-Control: no-cache, no-store, must-revalidate
