@@ -79,7 +79,7 @@ pub fn layout(width: f32, height: f32) -> Layout {
         content_width,
     }
 }
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(default)]
 pub struct CalculatorApp {
     pub calculator: Calculator,
@@ -101,6 +101,24 @@ pub struct CalculatorApp {
     touch_frame: bool,
     #[serde(skip)]
     viewport_size: Option<Vec2>,
+}
+impl Default for CalculatorApp {
+    fn default() -> Self {
+        Self {
+            calculator: Calculator::default(),
+            theme: Theme::default(),
+            sound: false,
+            haptics: false,
+            history_right: true,
+            settings_open: false,
+            dirty: false,
+            last_status: String::new(),
+            touch: touch::TouchController::default(),
+            targets: Vec::new(),
+            touch_frame: false,
+            viewport_size: None,
+        }
+    }
 }
 impl CalculatorApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
@@ -428,31 +446,41 @@ impl CalculatorApp {
                     }
                     ui.horizontal(|ui| {
                         ui.add_space((depth.min(8) * 8) as f32);
-                        ui.label(
-                            RichText::new(if matches!(step, Step::Value { .. }) {
-                                number.to_string()
-                            } else {
-                                String::new()
-                            })
-                            .small()
-                            .weak(),
+                        ui.add_sized(
+                            [20.0, 20.0],
+                            egui::Label::new(
+                                RichText::new(if matches!(step, Step::Value { .. }) {
+                                    number.to_string()
+                                } else {
+                                    String::new()
+                                })
+                                .small()
+                                .weak(),
+                            ),
                         );
-                        ui.label(RichText::new(operator).color(self.theme.accent()));
-                        let content = |ui: &mut egui::Ui| {
-                            ui.vertical(|ui| {
+                        ui.add_sized(
+                            [24.0, 20.0],
+                            egui::Label::new(RichText::new(operator).color(self.theme.accent())),
+                        );
+                        let content_width = ui.available_width();
+                        let alignment = if self.history_right {
+                            egui::Align::Max
+                        } else {
+                            egui::Align::Min
+                        };
+                        ui.allocate_ui_with_layout(
+                            Vec2::new(content_width, 0.0),
+                            egui::Layout::top_down(alignment),
+                            |ui| {
+                                ui.set_min_width(content_width);
                                 ui.label(RichText::new(label).size(19.0));
                                 if let Some(minutes) = minutes {
                                     ui.label(
                                         RichText::new(format!("{minutes} min")).small().weak(),
                                     );
                                 }
-                            });
-                        };
-                        if self.history_right {
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), content);
-                        } else {
-                            content(ui);
-                        }
+                            },
+                        );
                     });
                     if matches!(step, Step::Open(_)) {
                         depth += 1;
@@ -648,7 +676,17 @@ impl eframe::App for CalculatorApp {
                                         self.settings_open = true;
                                     }
                                 });
-                                ui.label(RichText::new(self.calculator.current_text()).size(24.0));
+                                ui.horizontal(|ui| {
+                                    ui.with_layout(
+                                        egui::Layout::right_to_left(egui::Align::Center),
+                                        |ui| {
+                                            ui.label(
+                                                RichText::new(self.calculator.current_text())
+                                                    .size(24.0),
+                                            );
+                                        },
+                                    );
+                                });
                                 ui.horizontal(|ui| {
                                     if ui.button("(").clicked() {
                                         self.dispatch(Action::Open);
@@ -862,5 +900,89 @@ mod cancellation_tests {
             touch.end(2, egui::pos2(20.0, 20.0), &[target]),
             Some(Action::Digit('1'))
         ));
+    }
+}
+
+#[cfg(test)]
+mod history_alignment_tests {
+    use super::*;
+    fn positions(mode: Mode, right: bool) -> Vec<(String, egui::Rect)> {
+        let ctx = egui::Context::default();
+        let mut app = CalculatorApp {
+            history_right: right,
+            ..Default::default()
+        };
+        app.calculator.apply(Action::Mode(mode));
+        let keys = if mode == Mode::Time {
+            "145+1230="
+        } else {
+            "1234+5="
+        };
+        for c in keys.chars() {
+            app.calculator.apply(Action::from_char(c).unwrap());
+        }
+        let mut rows = Vec::new();
+        for _ in 0..3 {
+            let output = ctx.run(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        Vec2::new(400.0, 400.0),
+                    )),
+                    ..Default::default()
+                },
+                |ctx| {
+                    egui::CentralPanel::default().show(ctx, |ui| app.tape(ui, 300.0));
+                },
+            );
+            rows.clear();
+            for clipped in output.shapes {
+                if let egui::Shape::Text(text) = clipped.shape {
+                    rows.push((
+                        text.galley.text().to_owned(),
+                        text.galley.rect.translate(text.pos.to_vec2()),
+                    ));
+                }
+            }
+        }
+        rows
+    }
+    #[test]
+    fn right_alignment_aligns_values_and_minutes_and_toggle_moves_them() {
+        for (mode, labels) in [
+            (
+                Mode::Time,
+                vec!["1:45", "12:30", "14:15", "105 min", "750 min"],
+            ),
+            (Mode::Number, vec!["1 234", "5", "1 239"]),
+        ] {
+            let right = positions(mode, true);
+            let left = positions(mode, false);
+            let rects: Vec<_> = labels
+                .iter()
+                .map(|label| right.iter().find(|(text, _)| text == label).unwrap().1)
+                .collect();
+            let edge = rects[0].right();
+            for rect in &rects {
+                assert!(
+                    (rect.right() - edge).abs() < 1.0,
+                    "Unaligned right edges: {rects:?}"
+                );
+            }
+            let label = labels[0];
+            let l = left.iter().find(|(text, _)| text == label).unwrap().1;
+            assert!(
+                rects[0].right() - l.right() > 100.0,
+                "Setting has no visible effect: {right:?} vs {left:?}"
+            );
+        }
+    }
+    #[test]
+    fn new_installations_default_to_right_aligned_history() {
+        assert!(CalculatorApp::default().history_right);
+        let restored: CalculatorApp = serde_json::from_str("{}").unwrap();
+        assert!(restored.history_right);
+        let restored: CalculatorApp = serde_json::from_str(r#"{"history_right":false}"#).unwrap();
+        assert!(!restored.history_right);
     }
 }
