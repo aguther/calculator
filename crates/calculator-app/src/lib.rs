@@ -21,6 +21,20 @@ impl Theme {
             Self::Dark => Color32::from_rgb(20, 29, 42),
         }
     }
+    fn panel(self) -> Color32 {
+        match self {
+            Self::Original => Color32::from_rgb(22, 22, 26),
+            Self::Light => Color32::from_rgb(232, 229, 224),
+            Self::Dark => Color32::from_rgb(25, 37, 52),
+        }
+    }
+    fn surface(self) -> Color32 {
+        match self {
+            Self::Original => Color32::from_rgb(34, 34, 39),
+            Self::Light => Color32::from_rgb(255, 253, 249),
+            Self::Dark => Color32::from_rgb(34, 49, 66),
+        }
+    }
     fn accent(self) -> Color32 {
         match self {
             Self::Original => Color32::from_rgb(232, 148, 58),
@@ -68,16 +82,139 @@ pub struct Layout {
     pub key_height: f32,
     pub tape_height: f32,
     pub content_width: f32,
+    pub header_height: f32,
+    pub display_height: f32,
+    pub paren_height: f32,
+    pub total_height: f32,
+    pub gap: f32,
+    pub landscape: bool,
 }
 pub fn layout(width: f32, height: f32) -> Layout {
-    let content_width = width.min(520.0);
-    let available = (height - 150.0).max(170.0);
-    let key_height = (available * 0.56 / 5.0).clamp(28.0, 76.0);
+    let landscape = (width >= 740.0 && height >= 500.0) || (width >= 540.0 && width > height);
+    let gap = if height < 500.0 { 4.0 } else { 8.0 };
+    let header_height = (height * 0.065).clamp(32.0, 48.0);
+    let display_height = (height * 0.085).clamp(36.0, 72.0);
+    let paren_height = (height * 0.05).clamp(24.0, 42.0);
+    let total_height = (height * 0.075).clamp(38.0, 56.0);
+    let key_height = if landscape {
+        ((height - header_height - display_height - paren_height - gap * 7.0) / 5.0)
+            .clamp(28.0, 76.0)
+    } else {
+        (height * 0.087).clamp(28.0, 72.0).min(
+            ((height
+                - header_height
+                - display_height
+                - paren_height
+                - total_height
+                - 48.0
+                - gap * 8.0)
+                / 5.0)
+                .max(28.0),
+        )
+    };
     Layout {
         key_height,
-        tape_height: (height - 150.0 - key_height * 5.0 - 24.0).max(30.0),
-        content_width,
+        tape_height: if landscape {
+            (height - total_height - 16.0).max(30.0)
+        } else {
+            (height
+                - header_height
+                - display_height
+                - paren_height
+                - total_height
+                - key_height * 5.0
+                - gap * 8.0)
+                .max(30.0)
+        },
+        content_width: width.min(if landscape { 1100.0 } else { 480.0 }),
+        header_height,
+        display_height,
+        paren_height,
+        total_height,
+        gap,
+        landscape,
     }
+}
+fn bold_font(size: f32) -> egui::FontId {
+    egui::FontId::new(size, egui::FontFamily::Name("semibold".into()))
+}
+fn configure_fonts(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+    fonts.font_data.insert(
+        "regular".into(),
+        egui::FontData::from_static(include_bytes!("../../../assets/fonts/NotoSans-Regular.ttf"))
+            .into(),
+    );
+    fonts.font_data.insert(
+        "semibold".into(),
+        egui::FontData::from_static(include_bytes!(
+            "../../../assets/fonts/NotoSans-SemiBold.ttf"
+        ))
+        .into(),
+    );
+    fonts
+        .families
+        .get_mut(&egui::FontFamily::Proportional)
+        .unwrap()
+        .insert(0, "regular".into());
+    let mut bold = fonts.families[&egui::FontFamily::Proportional].clone();
+    bold.insert(0, "semibold".into());
+    fonts
+        .families
+        .insert(egui::FontFamily::Name("semibold".into()), bold);
+    ctx.set_fonts(fonts);
+}
+fn paint_text(
+    ui: &egui::Ui,
+    rect: egui::Rect,
+    text: &str,
+    size: f32,
+    color: Color32,
+    bold: bool,
+    align: egui::Align,
+) {
+    if rect.width() <= 0.0 || rect.height() <= 0.0 {
+        return;
+    }
+    ui.interact(
+        rect,
+        ui.id()
+            .with(("text", text, rect.min.x.to_bits(), rect.min.y.to_bits())),
+        egui::Sense::hover(),
+    )
+    .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, text));
+    let mut font = if bold {
+        bold_font(size)
+    } else {
+        egui::FontId::proportional(size)
+    };
+    let mut galley = ui
+        .painter()
+        .layout_no_wrap(text.to_owned(), font.clone(), color);
+    if galley.size().x > rect.width() {
+        font.size = (size * rect.width() / galley.size().x).max(9.0);
+        galley = ui.painter().layout_no_wrap(text.to_owned(), font, color);
+    }
+    let x = match align {
+        egui::Align::Min => rect.left(),
+        egui::Align::Center => rect.center().x - galley.size().x * 0.5,
+        egui::Align::Max => rect.right() - galley.size().x,
+    };
+    ui.painter()
+        .with_clip_rect(ui.clip_rect().intersect(rect))
+        .galley(
+            egui::pos2(x, rect.center().y - galley.size().y * 0.5),
+            galley,
+            color,
+        );
+}
+fn child_ui(ui: &mut egui::Ui, rect: egui::Rect, salt: &'static str) -> egui::Ui {
+    ui.new_child(
+        egui::UiBuilder::new()
+            .id_salt(salt)
+            .max_rect(rect)
+            .layout(egui::Layout::top_down(egui::Align::Min)),
+    )
 }
 #[derive(Serialize, Deserialize)]
 #[serde(default)]
@@ -129,6 +266,7 @@ impl CalculatorApp {
             .storage
             .and_then(|storage| storage.get_string("calculator-v1"));
         let app = Self::restore(stored.as_deref());
+        configure_fonts(&cc.egui_ctx);
         app.theme.apply(&cc.egui_ctx);
         app
     }
@@ -254,7 +392,7 @@ impl CalculatorApp {
         } else {
             label
         })
-        .size((size.y * 0.4).clamp(15.0, 27.0))
+        .font(bold_font((size.y * 0.4).clamp(15.0, 28.0)))
         .color(foreground);
         let text = if matches!(
             action,
@@ -264,7 +402,7 @@ impl CalculatorApp {
         } else {
             text
         };
-        let mut button = egui::Button::new(text).corner_radius(12.0);
+        let mut button = egui::Button::new(text).corner_radius(15.0);
         if let Some(background) = background {
             button = button.fill(background);
         }
@@ -324,7 +462,7 @@ impl CalculatorApp {
         }
     }
     fn keypad(&mut self, ui: &mut egui::Ui, l: &Layout) {
-        let gap = 6.0;
+        let gap = l.gap;
         let width = (ui.available_width() - gap * 3.0) / 4.0;
         let size = Vec2::new(width, l.key_height);
         let rows = [
@@ -427,14 +565,17 @@ impl CalculatorApp {
                                 },
                             )
                         }
-                        Step::Sum(value) => {
-                            ("=".into(), self.calculator.label(*value, false), None)
-                        }
+                        Step::Sum(value) => (
+                            "=".into(),
+                            self.calculator.label(*value, false),
+                            (self.calculator.mode == Mode::Time)
+                                .then(|| format_number(*value / 60.0)),
+                        ),
                         Step::Open(op) => {
                             groups.push(i);
                             (
                                 op.map(symbol).unwrap_or("").to_string(),
-                                "Gruppe (".into(),
+                                "Gruppe".into(),
                                 None,
                             )
                         }
@@ -444,132 +585,321 @@ impl CalculatorApp {
                             if let Some(Step::Open(op)) = steps.first_mut() {
                                 *op = None;
                             }
+                            let value = calculator_core::evaluate(&steps);
                             (
-                                "= )".into(),
-                                self.calculator
-                                    .label(calculator_core::evaluate(&steps), false),
-                                None,
+                                "=".into(),
+                                self.calculator.label(value, false),
+                                (self.calculator.mode == Mode::Time)
+                                    .then(|| format_number(value / 60.0)),
                             )
                         }
                     };
-                    if matches!(step, Step::Sum(_)) {
-                        ui.separator();
+                    let sum = matches!(step, Step::Sum(_) | Step::Close);
+                    let group_header = matches!(step, Step::Open(_));
+                    let row_height = 32.0;
+                    let (mut rect, _) = ui.allocate_exact_size(
+                        Vec2::new(ui.available_width(), row_height),
+                        egui::Sense::hover(),
+                    );
+                    let base_left = rect.left();
+                    let visible_depth = depth.min(8);
+                    let indentation =
+                        (visible_depth as f32 * 12.0).min((rect.width() - 220.0).max(0.0));
+                    let rail_step = if visible_depth > 0 {
+                        indentation / visible_depth as f32
+                    } else {
+                        0.0
+                    };
+                    rect.min.x += indentation;
+                    for level in 0..visible_depth {
+                        let x = base_left + level as f32 * rail_step + 2.0;
+                        ui.painter().vline(
+                            x,
+                            rect.top() - 3.0..=rect.bottom() + 3.0,
+                            egui::Stroke::new(2.0_f32, self.theme.accent().gamma_multiply(0.4)),
+                        );
                     }
-                    ui.horizontal(|ui| {
-                        ui.add_space((depth.min(8) * 8) as f32);
-                        ui.add_sized(
-                            [20.0, 20.0],
-                            egui::Label::new(
-                                RichText::new(if matches!(step, Step::Value { .. }) {
-                                    number.to_string()
-                                } else {
-                                    String::new()
-                                })
-                                .small()
-                                .weak(),
-                            ),
+                    let fill = if sum || group_header {
+                        self.theme.accent().gamma_multiply(0.12)
+                    } else {
+                        self.theme.surface()
+                    };
+                    ui.painter().rect_filled(rect, 11.0, fill);
+                    if sum || group_header {
+                        ui.painter().rect_stroke(
+                            rect,
+                            11.0,
+                            egui::Stroke::new(1.0_f32, self.theme.accent().gamma_multiply(0.35)),
+                            egui::StrokeKind::Inside,
                         );
-                        ui.add_sized(
-                            [24.0, 20.0],
-                            egui::Label::new(RichText::new(operator).color(self.theme.accent())),
+                    }
+                    let inner = rect.shrink2(Vec2::new(10.0, 0.0));
+                    if matches!(step, Step::Value { .. }) {
+                        let badge = egui::Rect::from_center_size(
+                            egui::pos2(inner.left() + 10.0, inner.center().y),
+                            Vec2::splat(22.0),
                         );
-                        let content_width = ui.available_width();
-                        let alignment = if self.history_right {
-                            egui::Align::Max
+                        ui.painter().circle_filled(
+                            badge.center(),
+                            11.0,
+                            ui.visuals().weak_text_color().gamma_multiply(0.12),
+                        );
+                        paint_text(
+                            ui,
+                            badge,
+                            &number.to_string(),
+                            11.0,
+                            ui.visuals().weak_text_color(),
+                            true,
+                            egui::Align::Center,
+                        );
+                    }
+                    let op_rect = egui::Rect::from_min_max(
+                        egui::pos2(inner.left() + 26.0, inner.top()),
+                        egui::pos2(inner.left() + 50.0, inner.bottom()),
+                    );
+                    paint_text(
+                        ui,
+                        op_rect,
+                        &operator,
+                        21.0,
+                        self.theme.accent(),
+                        true,
+                        egui::Align::Center,
+                    );
+                    let value_width = (inner.width() * 0.32)
+                        .clamp(78.0, 180.0)
+                        .min((inner.width() - 54.0).max(20.0));
+                    let value_rect = egui::Rect::from_min_max(
+                        egui::pos2(inner.right() - value_width, inner.top()),
+                        inner.max,
+                    );
+                    paint_text(
+                        ui,
+                        value_rect,
+                        &label,
+                        if group_header { 15.0 } else { 21.0 },
+                        if sum {
+                            self.theme.accent()
+                        } else if group_header {
+                            ui.visuals().weak_text_color()
                         } else {
-                            egui::Align::Min
-                        };
-                        ui.allocate_ui_with_layout(
-                            Vec2::new(content_width, 0.0),
-                            egui::Layout::top_down(alignment),
-                            |ui| {
-                                ui.set_min_width(content_width);
-                                ui.label(RichText::new(label).size(19.0));
-                                if let Some(minutes) = minutes {
-                                    ui.label(
-                                        RichText::new(format!("{minutes} min")).small().weak(),
-                                    );
-                                }
-                            },
+                            ui.visuals().text_color()
+                        },
+                        true,
+                        egui::Align::Max,
+                    );
+                    if let Some(minutes) = minutes {
+                        let minutes_rect = egui::Rect::from_min_max(
+                            egui::pos2(op_rect.right() + 4.0, inner.top()),
+                            egui::pos2(value_rect.left() - 12.0, inner.bottom()),
                         );
-                    });
+                        paint_text(
+                            ui,
+                            minutes_rect,
+                            &format!("{minutes} min"),
+                            12.0,
+                            ui.visuals().weak_text_color(),
+                            true,
+                            egui::Align::Max,
+                        );
+                    }
                     if matches!(step, Step::Open(_)) {
                         depth += 1;
                     }
                 }
             });
     }
-    fn calculator_ui(&mut self, ui: &mut egui::Ui, width: f32, height: f32) {
-        let l = layout(width, height);
-        ui.horizontal(|ui| {
-            if ui
-                .selectable_label(self.calculator.mode == Mode::Time, "Zeit")
-                .clicked()
-            {
-                self.dispatch(Action::Mode(Mode::Time));
-            }
-            if ui
-                .selectable_label(self.calculator.mode == Mode::Number, "Rechner")
-                .clicked()
-            {
-                self.dispatch(Action::Mode(Mode::Number));
-            }
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui
-                    .button("⚙")
-                    .on_hover_text("Informationen und Einstellungen")
-                    .clicked()
-                {
-                    self.settings_open = true;
-                }
-            });
-        });
-        ui.separator();
-        self.tape(ui, l.tape_height);
-        ui.separator();
-        ui.horizontal(|ui| {
-            ui.label(RichText::new("SUMME").small().weak());
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(
-                    RichText::new(self.calculator.label(self.calculator.total(), false))
-                        .size(23.0)
-                        .color(self.theme.accent()),
+    fn mode_bar(&mut self, ui: &mut egui::Ui, rect: egui::Rect) {
+        ui.painter().rect_filled(rect, 16.0, self.theme.panel());
+        let inset = rect.shrink(5.0);
+        let info_width = inset.height();
+        let segment_width = (inset.width() - info_width - 8.0) * 0.5;
+        for (index, mode, label) in [(0, Mode::Time, "Zeit"), (1, Mode::Number, "Rechner")] {
+            let r = egui::Rect::from_min_size(
+                egui::pos2(inset.left() + index as f32 * segment_width, inset.top()),
+                Vec2::new(segment_width, inset.height()),
+            );
+            let selected = self.calculator.mode == mode;
+            let response =
+                ui.put(
+                    r,
+                    egui::Button::new(RichText::new(label).font(bold_font(15.0)).color(
+                        if selected {
+                            ui.visuals().text_color()
+                        } else {
+                            ui.visuals().weak_text_color()
+                        },
+                    ))
+                    .fill(if selected {
+                        self.theme.surface()
+                    } else {
+                        Color32::TRANSPARENT
+                    })
+                    .stroke(egui::Stroke::NONE)
+                    .corner_radius(12.0),
                 );
-                if ui
-                    .button("Undo")
-                    .on_hover_text("Letzten Schritt zurück")
-                    .clicked()
-                {
-                    self.dispatch(Action::Undo);
-                }
-                if self.calculator.mode == Mode::Time {
-                    ui.label(
-                        RichText::new(format!(
-                            "{} min",
-                            format_number(self.calculator.total() / 60.0)
-                        ))
-                        .small()
-                        .weak(),
-                    );
-                }
-            });
+            if response.clicked() {
+                self.dispatch(Action::Mode(mode));
+            }
+        }
+        let r = egui::Rect::from_min_size(
+            egui::pos2(inset.right() - info_width, inset.top()),
+            Vec2::splat(info_width),
+        );
+        let response = ui.put(
+            r,
+            egui::Button::new(RichText::new("i").font(bold_font(19.0)))
+                .fill(self.theme.surface())
+                .corner_radius(100.0),
+        );
+        if response
+            .on_hover_text("Informationen und Einstellungen")
+            .clicked()
+        {
+            self.settings_open = true;
+        }
+    }
+    fn total_bar(&mut self, ui: &mut egui::Ui, rect: egui::Rect) {
+        let r = rect.shrink2(Vec2::new(12.0, 0.0));
+        ui.painter().hline(
+            rect.x_range(),
+            rect.top(),
+            egui::Stroke::new(1.0_f32, ui.visuals().weak_text_color().gamma_multiply(0.2)),
+        );
+        let total = self.calculator.label(self.calculator.total(), false);
+        let value_width = (r.width() * 0.3).clamp(76.0, 160.0);
+        let value_rect =
+            egui::Rect::from_min_max(egui::pos2(r.right() - value_width, r.top()), r.max);
+        paint_text(
+            ui,
+            value_rect,
+            &total,
+            25.0,
+            self.theme.accent(),
+            true,
+            egui::Align::Max,
+        );
+        let undo_rect = egui::Rect::from_center_size(
+            egui::pos2(value_rect.left() - 23.0, r.center().y),
+            Vec2::splat(34.0),
+        );
+        let undo = ui.put(
+            undo_rect,
+            egui::Button::new("")
+                .fill(self.theme.surface())
+                .corner_radius(100.0),
+        );
+        undo.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Letzten Schritt zurück")
         });
+        if undo.on_hover_text("Letzten Schritt zurück").clicked() {
+            self.dispatch(Action::Undo);
+        }
+        let center = undo_rect.center();
+        let stroke = egui::Stroke::new(2.0_f32, ui.visuals().weak_text_color());
+        let points = (0..=16)
+            .map(|index| {
+                let angle = -2.4 + index as f32 * 4.7 / 16.0;
+                center + Vec2::angled(angle) * 7.0
+            })
+            .collect();
+        ui.painter().add(egui::Shape::line(points, stroke));
+        let tip = center + Vec2::angled(-2.4) * 7.0;
+        ui.painter()
+            .line_segment([tip, tip + Vec2::new(-1.0, -5.0)], stroke);
+        ui.painter()
+            .line_segment([tip, tip + Vec2::new(5.0, -1.0)], stroke);
+        paint_text(
+            ui,
+            egui::Rect::from_min_max(r.min, egui::pos2(r.left() + 60.0, r.bottom())),
+            "SUMME",
+            11.0,
+            ui.visuals().weak_text_color(),
+            true,
+            egui::Align::Min,
+        );
+        if self.calculator.mode == Mode::Time {
+            let minutes = egui::Rect::from_min_max(
+                egui::pos2(r.left() + 64.0, r.top()),
+                egui::pos2(undo_rect.left() - 6.0, r.bottom()),
+            );
+            if minutes.width() > 26.0 {
+                paint_text(
+                    ui,
+                    minutes,
+                    &format!("{} min", format_number(self.calculator.total() / 60.0)),
+                    12.0,
+                    ui.visuals().weak_text_color(),
+                    true,
+                    egui::Align::Max,
+                );
+            }
+        }
+    }
+    fn history_panel(&mut self, ui: &mut egui::Ui, rect: egui::Rect, l: &Layout) {
+        ui.painter().rect_filled(rect, 18.0, self.theme.panel());
+        let tape_rect = egui::Rect::from_min_max(
+            rect.min + Vec2::splat(8.0),
+            egui::pos2(rect.right() - 8.0, rect.bottom() - l.total_height - 4.0),
+        );
+        let mut tape_ui = child_ui(ui, tape_rect, "history");
+        tape_ui.spacing_mut().item_spacing.y = 2.0;
+        self.tape(&mut tape_ui, tape_rect.height().max(0.0));
+        self.total_bar(
+            ui,
+            egui::Rect::from_min_max(
+                egui::pos2(rect.left(), rect.bottom() - l.total_height),
+                rect.max,
+            ),
+        );
+    }
+    fn controls(&mut self, ui: &mut egui::Ui, rect: egui::Rect, l: &Layout) {
+        let keypad_height = l.key_height * 5.0 + l.gap * 4.0;
+        let keypad_rect = egui::Rect::from_min_max(
+            egui::pos2(rect.left(), rect.bottom() - keypad_height),
+            rect.max,
+        );
+        let paren_rect = egui::Rect::from_min_size(
+            egui::pos2(rect.left(), keypad_rect.top() - l.gap - l.paren_height),
+            Vec2::new(rect.width(), l.paren_height),
+        );
+        let display_rect = egui::Rect::from_min_size(
+            egui::pos2(
+                rect.left() + 8.0,
+                paren_rect.top() - l.gap - l.display_height,
+            ),
+            Vec2::new(rect.width() - 16.0, l.display_height),
+        );
         let text = self.calculator.current_text();
-        ui.horizontal(|ui| {
-            ui.label(self.calculator.state().pending.map(symbol).unwrap_or(""));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new(&text).size(if text.len() > 18 { 19.0 } else { 32.0 }));
-            });
-        });
+        paint_text(
+            ui,
+            display_rect,
+            &text,
+            if text.len() > 18 {
+                25.0
+            } else {
+                l.display_height * 0.78
+            },
+            self.theme.accent(),
+            true,
+            egui::Align::Max,
+        );
         if !self.calculator.notice.is_empty() {
-            ui.label(
-                RichText::new(&self.calculator.notice)
-                    .small()
-                    .color(self.theme.accent()),
+            paint_text(
+                ui,
+                egui::Rect::from_min_size(display_rect.min, Vec2::new(display_rect.width(), 16.0)),
+                &self.calculator.notice,
+                11.0,
+                self.theme.accent(),
+                false,
+                egui::Align::Min,
             );
         }
-        ui.horizontal(|ui| {
-            let size = Vec2::new((ui.available_width() - 6.0) / 2.0, 28.0);
+        let mut paren_ui = child_ui(ui, paren_rect, "parentheses");
+        paren_ui.spacing_mut().item_spacing = Vec2::splat(l.gap);
+        paren_ui.horizontal(|ui| {
+            let size = Vec2::new((rect.width() - l.gap) * 0.5, l.paren_height);
             self.key(
                 ui,
                 "(",
@@ -587,7 +917,49 @@ impl CalculatorApp {
                 self.calculator.can_close(),
             );
         });
-        self.keypad(ui, &l);
+        self.keypad(&mut child_ui(ui, keypad_rect, "keypad"), l);
+    }
+    fn calculator_ui(&mut self, ui: &mut egui::Ui, width: f32, height: f32) {
+        let l = layout(width, height);
+        let size = Vec2::new(l.content_width, height.min(860.0));
+        let rect = egui::Rect::from_min_size(
+            ui.min_rect().min + Vec2::new((width - size.x) * 0.5, (height - size.y) * 0.5),
+            size,
+        );
+        if l.landscape {
+            let column_width = (rect.width() - 16.0) * 0.5;
+            let left = egui::Rect::from_min_size(rect.min, Vec2::new(column_width, rect.height()));
+            let right =
+                egui::Rect::from_min_size(egui::pos2(left.right() + 16.0, rect.top()), left.size());
+            let (controls, history) = if self.history_right {
+                (left, right)
+            } else {
+                (right, left)
+            };
+            self.mode_bar(
+                ui,
+                egui::Rect::from_min_size(
+                    controls.min,
+                    Vec2::new(controls.width(), l.header_height),
+                ),
+            );
+            self.controls(ui, controls, &l);
+            self.history_panel(ui, history, &l);
+        } else {
+            self.mode_bar(
+                ui,
+                egui::Rect::from_min_size(rect.min, Vec2::new(rect.width(), l.header_height)),
+            );
+            let controls_height =
+                l.key_height * 5.0 + l.gap * 6.0 + l.paren_height + l.display_height;
+            let history = egui::Rect::from_min_max(
+                egui::pos2(rect.left(), rect.top() + l.header_height + l.gap),
+                egui::pos2(rect.right(), rect.bottom() - controls_height - l.gap),
+            );
+            self.history_panel(ui, history, &l);
+            self.controls(ui, rect, &l);
+        }
+        ui.allocate_rect(rect, egui::Sense::hover());
     }
     fn settings(&mut self, ctx: &egui::Context) {
         if !self.settings_open {
@@ -601,7 +973,7 @@ impl CalculatorApp {
             for theme in [Theme::Original,Theme::Light,Theme::Dark]{if ui.selectable_value(&mut self.theme,theme,theme.label()).changed(){self.theme.apply(ctx);self.dirty=true;}}
             if ui.checkbox(&mut self.sound,"Tastenklicks").changed(){self.dirty=true;}
             if ui.add_enabled(crate::feedback::supports_haptics(),egui::Checkbox::new(&mut self.haptics,"Haptik")).on_disabled_hover_text("Dieser Browser bzw. dieses Gerät unterstützt keine Vibration.").changed(){self.dirty=true;}
-            if ui.checkbox(&mut self.history_right,"Verlauf rechtsbündig").changed(){self.dirty=true;}
+            if ui.checkbox(&mut self.history_right,"Verlauf rechts (Querformat)").changed(){self.dirty=true;}
             ui.separator();ui.label("Tastatur: Ziffern, + − * /, Klammern, Enter, Rücktaste. Escape löscht alles; Entf löscht die Eingabe. Punkt/Komma fügt im Zeitmodus einen Doppelpunkt ein.");
             ui.label("Berechnungen und Einstellungen bleiben auf diesem Gerät.");
             ui.collapsing("Diagnose",|ui|{
@@ -653,86 +1025,7 @@ impl eframe::App for CalculatorApp {
                 }
                 let width = ui.available_width();
                 let height = ui.available_height();
-                if width > height * 1.35 {
-                    let half = (width - 12.0) / 2.0;
-                    ui.horizontal_top(|ui| {
-                        ui.allocate_ui_with_layout(
-                            Vec2::new(half, height),
-                            egui::Layout::top_down(egui::Align::Min),
-                            |ui| {
-                                ui.heading("Verlauf");
-                                self.tape(ui, (height - 36.0).max(30.0));
-                            },
-                        );
-                        ui.allocate_ui_with_layout(
-                            Vec2::new(half, height),
-                            egui::Layout::top_down(egui::Align::Min),
-                            |ui| {
-                                // The compact panel omits the second tape in landscape.
-                                let l = Layout {
-                                    key_height: ((height - 100.0) / 5.0).max(24.0),
-                                    tape_height: 0.0,
-                                    content_width: half,
-                                };
-                                ui.horizontal(|ui| {
-                                    if ui.button("Zeit / Rechner").clicked() {
-                                        let mode = if self.calculator.mode == Mode::Time {
-                                            Mode::Number
-                                        } else {
-                                            Mode::Time
-                                        };
-                                        self.dispatch(Action::Mode(mode));
-                                    }
-                                    if ui.button("⚙").clicked() {
-                                        self.settings_open = true;
-                                    }
-                                });
-                                ui.horizontal(|ui| {
-                                    ui.with_layout(
-                                        egui::Layout::right_to_left(egui::Align::Center),
-                                        |ui| {
-                                            ui.label(
-                                                RichText::new(self.calculator.current_text())
-                                                    .size(24.0),
-                                            );
-                                        },
-                                    );
-                                });
-                                ui.horizontal(|ui| {
-                                    if ui.button("(").clicked() {
-                                        self.dispatch(Action::Open);
-                                    }
-                                    if ui
-                                        .add_enabled(
-                                            self.calculator.can_close(),
-                                            egui::Button::new(")"),
-                                        )
-                                        .clicked()
-                                    {
-                                        self.dispatch(Action::Close);
-                                    }
-                                    if ui.button("Undo").clicked() {
-                                        self.dispatch(Action::Undo);
-                                    }
-                                });
-                                self.keypad(ui, &l);
-                            },
-                        );
-                    });
-                } else {
-                    let content_width = width.min(520.0);
-                    let offset = (width - content_width) * 0.5;
-                    ui.horizontal_top(|ui| {
-                        ui.add_space(offset);
-                        ui.allocate_ui_with_layout(
-                            Vec2::new(content_width, height),
-                            egui::Layout::top_down(egui::Align::Min),
-                            |ui| {
-                                self.calculator_ui(ui, content_width, height);
-                            },
-                        );
-                    });
-                }
+                self.calculator_ui(ui, width, height);
             });
         self.settings(ctx);
         if self.settings_open {
@@ -799,6 +1092,137 @@ mod touch;
 mod rendering_tests {
     use super::*;
     #[test]
+    fn history_side_moves_the_panel_and_keeps_keys_bounded() {
+        for (width, height) in [
+            (1440.0, 900.0),
+            (844.0, 390.0),
+            (568.0, 320.0),
+            (400.0, 760.0),
+            (320.0, 568.0),
+            (300.0, 400.0),
+        ] {
+            for right in [true, false] {
+                let ctx = egui::Context::default();
+                configure_fonts(&ctx);
+                let mut app = CalculatorApp {
+                    history_right: right,
+                    ..Default::default()
+                };
+                for _ in 0..3 {
+                    app.targets.clear();
+                    let _ = ctx.run(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(
+                                egui::Pos2::ZERO,
+                                Vec2::new(width, height),
+                            )),
+                            ..Default::default()
+                        },
+                        |ctx| {
+                            egui::CentralPanel::default()
+                                .frame(egui::Frame::new().inner_margin(10.0))
+                                .show(ctx, |ui| {
+                                    app.calculator_ui(
+                                        ui,
+                                        ui.available_width(),
+                                        ui.available_height(),
+                                    )
+                                });
+                        },
+                    );
+                }
+                let metrics = layout(width - 20.0, height - 20.0);
+                if !metrics.landscape {
+                    let history_height = height
+                        - 20.0
+                        - metrics.header_height
+                        - metrics.display_height
+                        - metrics.paren_height
+                        - metrics.key_height * 5.0
+                        - metrics.gap * 8.0;
+                    assert!(
+                        history_height >= metrics.total_height + 47.9,
+                        "No full history row at {width}x{height}"
+                    );
+                }
+                let seven = app
+                    .targets
+                    .iter()
+                    .find(|target| matches!(target.action, Action::Digit('7')))
+                    .unwrap();
+                if layout(width - 20.0, height - 20.0).landscape {
+                    assert_eq!(
+                        seven.rect.center().x < width * 0.5,
+                        right,
+                        "History side ignored at {width}x{height}"
+                    );
+                }
+                for target in &app.targets {
+                    assert!(
+                        target.rect.top() >= 0.0
+                            && target.rect.bottom() <= height
+                            && target.rect.left() >= 0.0
+                            && target.rect.right() <= width,
+                        "Key outside viewport: {:?} at {width}x{height}",
+                        target.rect
+                    );
+                    assert!(target.rect.height() <= 76.1, "Desktop key grew too tall");
+                }
+                let bottom = app
+                    .targets
+                    .iter()
+                    .map(|t| t.rect.bottom())
+                    .fold(0.0_f32, f32::max);
+                assert!(
+                    height - bottom <= 32.0,
+                    "Unused space below keypad at {width}x{height}"
+                );
+            }
+        }
+    }
+    #[test]
+    fn phone_safe_area_keeps_a_simple_group_header_visible() {
+        let ctx = egui::Context::default();
+        configure_fonts(&ctx);
+        let mut app = CalculatorApp::default();
+        for c in "(25+25)".chars() {
+            app.calculator.apply(Action::from_char(c).unwrap());
+        }
+        let mut visible = false;
+        for _ in 0..3 {
+            let output = ctx.run(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        Vec2::new(390.0, 751.0),
+                    )),
+                    ..Default::default()
+                },
+                |ctx| {
+                    egui::CentralPanel::default()
+                        .frame(egui::Frame::new().inner_margin(10.0))
+                        .show(ctx, |ui| {
+                            app.calculator_ui(ui, ui.available_width(), ui.available_height())
+                        });
+                },
+            );
+            visible = output.shapes.iter().any(|clipped| {
+                if let egui::Shape::Text(text) = &clipped.shape {
+                    text.galley.text() == "Gruppe"
+                        && clipped
+                            .clip_rect
+                            .contains_rect(text.galley.rect.translate(text.pos.to_vec2()))
+                } else {
+                    false
+                }
+            });
+        }
+        assert!(
+            visible,
+            "Simple group header scrolled out of a normal iPhone safe area"
+        );
+    }
+    #[test]
     fn bottom_keys_remain_visible() {
         for (width, height, long_entry) in [
             (320.0, 568.0, false),
@@ -806,6 +1230,7 @@ mod rendering_tests {
             (320.0, 568.0, true),
         ] {
             let ctx = egui::Context::default();
+            configure_fonts(&ctx);
             let mut app = CalculatorApp::default();
             if long_entry {
                 app.calculator.apply(Action::Mode(Mode::Number));
@@ -923,6 +1348,7 @@ mod history_alignment_tests {
     use super::*;
     fn positions(mode: Mode, right: bool) -> Vec<(String, egui::Rect)> {
         let ctx = egui::Context::default();
+        configure_fonts(&ctx);
         let mut app = CalculatorApp {
             history_right: right,
             ..Default::default()
@@ -963,12 +1389,9 @@ mod history_alignment_tests {
         rows
     }
     #[test]
-    fn right_alignment_aligns_values_and_minutes_and_toggle_moves_them() {
+    fn values_align_independently_of_history_column_position() {
         for (mode, labels) in [
-            (
-                Mode::Time,
-                vec!["1:45", "12:30", "14:15", "105 min", "750 min"],
-            ),
+            (Mode::Time, vec!["1:45", "12:30", "14:15"]),
             (Mode::Number, vec!["1 234", "5", "1 239"]),
         ] {
             let right = positions(mode, true);
@@ -987,10 +1410,72 @@ mod history_alignment_tests {
             let label = labels[0];
             let l = left.iter().find(|(text, _)| text == label).unwrap().1;
             assert!(
-                rects[0].right() - l.right() > 100.0,
-                "Setting has no visible effect: {right:?} vs {left:?}"
+                (rects[0].right() - l.right()).abs() < 1.0,
+                "Numeric alignment depends on history side: {right:?} vs {left:?}"
             );
         }
+    }
+    #[test]
+    fn nested_group_rows_remain_readable_and_accessible_at_narrow_width() {
+        let ctx = egui::Context::default();
+        configure_fonts(&ctx);
+        ctx.enable_accesskit();
+        let mut app = CalculatorApp::default();
+        for c in "((((((((25+25))))))))".chars() {
+            app.calculator.apply(Action::from_char(c).unwrap());
+        }
+        let mut labels = Vec::new();
+        let mut rows = Vec::new();
+        for _ in 0..3 {
+            let output = ctx.run(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        Vec2::new(250.0, 1000.0),
+                    )),
+                    ..Default::default()
+                },
+                |ctx| {
+                    egui::CentralPanel::default().show(ctx, |ui| app.tape(ui, 950.0));
+                },
+            );
+            labels = output
+                .platform_output
+                .accesskit_update
+                .unwrap()
+                .nodes
+                .into_iter()
+                .filter_map(|(_, node)| node.value().or_else(|| node.label()).map(str::to_owned))
+                .collect();
+            rows.clear();
+            for clipped in output.shapes {
+                if let egui::Shape::Text(text) = clipped.shape {
+                    rows.push((
+                        text.galley.text().to_owned(),
+                        text.galley.rect.translate(text.pos.to_vec2()),
+                    ));
+                }
+            }
+        }
+        for expected in ["Gruppe", "0:25", "25 min", "0:50", "50 min"] {
+            assert!(
+                labels.iter().any(|label| label == expected),
+                "Missing accessible history text: {expected}"
+            );
+        }
+        let value = rows.iter().find(|(text, _)| text == "0:25").unwrap().1;
+        let minutes = rows.iter().find(|(text, _)| text == "25 min").unwrap().1;
+        assert!(minutes.width() > 20.0 && minutes.left() >= 0.0);
+        assert!(minutes.right() + 6.0 < value.left());
+        assert!((minutes.center().y - value.center().y).abs() < 3.0);
+    }
+    #[test]
+    fn time_and_minutes_share_a_compact_history_row() {
+        let rows = positions(Mode::Time, true);
+        let value = rows.iter().find(|(text, _)| text == "1:45").unwrap().1;
+        let minutes = rows.iter().find(|(text, _)| text == "105 min").unwrap().1;
+        assert!((value.center().y - minutes.center().y).abs() < 3.0);
+        assert!(minutes.right() + 6.0 < value.left());
     }
     #[test]
     fn unchanged_tab_does_not_overwrite_newer_calculation_on_update() {
