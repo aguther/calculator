@@ -322,6 +322,7 @@ impl CalculatorApp {
             .and_then(|storage| storage.get_string("calculator-v1"));
         let app = Self::restore(stored.as_deref());
         configure_fonts(&cc.egui_ctx);
+        egui_extras::install_image_loaders(&cc.egui_ctx);
         app.theme.apply(&cc.egui_ctx);
         app
     }
@@ -472,33 +473,12 @@ impl CalculatorApp {
                     "Letzte Stelle löschen",
                 )
             });
-            let center = response.rect.center();
-            let h = (size.y * 0.32).clamp(12.0, 24.0);
-            let w = h * 1.5;
-            let stroke = egui::Stroke::new(1.7_f32, foreground);
-            let points = vec![
-                egui::pos2(center.x - w * 0.5, center.y),
-                egui::pos2(center.x - w * 0.2, center.y - h * 0.5),
-                egui::pos2(center.x + w * 0.5, center.y - h * 0.5),
-                egui::pos2(center.x + w * 0.5, center.y + h * 0.5),
-                egui::pos2(center.x - w * 0.2, center.y + h * 0.5),
-            ];
-            ui.painter().add(egui::Shape::closed_line(points, stroke));
-            let x = center.x + w * 0.12;
-            let d = h * 0.2;
-            ui.painter().line_segment(
-                [
-                    egui::pos2(x - d, center.y - d),
-                    egui::pos2(x + d, center.y + d),
-                ],
-                stroke,
-            );
-            ui.painter().line_segment(
-                [
-                    egui::pos2(x - d, center.y + d),
-                    egui::pos2(x + d, center.y - d),
-                ],
-                stroke,
+            icons::paint(
+                ui,
+                response.rect.center(),
+                (size.y * 0.4).clamp(18.0, 28.0),
+                icons::Icon::Delete,
+                foreground,
             );
         }
         if enabled {
@@ -871,24 +851,13 @@ impl CalculatorApp {
         if undo.on_hover_text("Letzten Schritt zurück").clicked() {
             self.dispatch(Action::Undo);
         }
-        let center = undo_rect.center();
-        let stroke = egui::Stroke::new(2.0_f32, ui.visuals().weak_text_color());
-        let arc_center = center + Vec2::new(0.0, 2.0);
-        let points = (0..=24)
-            .map(|index| {
-                let angle =
-                    -std::f32::consts::FRAC_PI_2 + index as f32 * std::f32::consts::PI * 1.4 / 24.0;
-                arc_center + Vec2::angled(angle) * 7.0
-            })
-            .collect();
-        ui.painter().add(egui::Shape::line(points, stroke));
-        let tip = center + Vec2::new(-8.0, -5.0);
-        ui.painter()
-            .line_segment([tip, center + Vec2::new(0.0, -5.0)], stroke);
-        ui.painter().add(egui::Shape::line(
-            vec![tip + Vec2::new(5.0, -5.0), tip, tip + Vec2::new(5.0, 5.0)],
-            stroke,
-        ));
+        icons::paint(
+            ui,
+            undo_rect.center(),
+            22.0,
+            icons::Icon::Undo,
+            ui.visuals().weak_text_color(),
+        );
         paint_text(
             ui,
             egui::Rect::from_min_max(r.min, egui::pos2(r.left() + 60.0, r.bottom())),
@@ -1194,6 +1163,7 @@ impl eframe::App for CalculatorApp {
     }
 }
 mod feedback;
+mod icons;
 mod touch;
 
 #[cfg(test)]

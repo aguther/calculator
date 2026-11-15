@@ -30,7 +30,7 @@ if ('serviceWorker' in navigator) {
   fetch('/sw.js', {cache:'no-store'}).then(response => {
     if (!response.ok || !response.headers.get('content-type')?.includes('javascript')) return;
     return navigator.serviceWorker.register('/sw.js', {updateViaCache:'none'}).then(registration => {
-      const offer = () => { if (registration.waiting && navigator.serviceWorker.controller) {update.hidden = false;update.textContent='↻';update.title='Neue Version verfügbar · jetzt aktualisieren';update.setAttribute('aria-label',update.title);} };
+      const offer = () => { if (registration.waiting && navigator.serviceWorker.controller) {update.hidden = false;update.title='Neue Version verfügbar · jetzt aktualisieren';update.setAttribute('aria-label',update.title);} };
       offer();
       registration.addEventListener('updatefound', () => registration.installing?.addEventListener('statechange', offer));
       update.addEventListener('click', () => registration.waiting?.postMessage({type:'ACTIVATE_UPDATE'}));

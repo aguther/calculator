@@ -7,6 +7,7 @@ license.workspace = true
 [dependencies]
 calculator-core = { path = "../calculator-core" }
 eframe = { version = "=0.33.3", default-features = false, features = ["default_fonts", "glow", "persistence", "x11", "wayland", "accesskit"] }
+egui_extras = { version = "=0.33.3", default-features = false, features = ["svg"] }
 serde.workspace = true
 serde_json.workspace = true
 
