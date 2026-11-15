@@ -39,7 +39,7 @@ for(const viewport of [{width:320,height:568},{width:400,height:760}]){
 
 test('theme selection persists and blocks calculator keyboard while settings are open',async({page})=>{
  await page.setViewportSize({width:400,height:760});await ready(page);await page.keyboard.press('F1');
- await page.waitForTimeout(100);await page.mouse.click(40,174);
+ await page.waitForTimeout(100);await page.mouse.click(200,293);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').theme)).toBe('Light');
  await page.keyboard.type('123');await expect(page.locator('#calculator-status')).toContainText('0:00');
  await page.keyboard.press('Escape');await page.reload();await expect(page.locator('#loading')).toHaveCount(0);
@@ -69,7 +69,7 @@ test('complete second build updates both tabs and remains available offline',asy
   expect(navigations).toBe(0);expect(await page.evaluate(()=>navigator.serviceWorker.controller===window.__controllerBeforeUpdate)).toBe(true);
   expect(await page.evaluate(()=>caches.keys())).toContain(old[0]);
   await page.locator('canvas').focus();await page.keyboard.type('+10=');await expect(page.locator('#calculator-status')).toContainText('1:00');
-  await expect.poll(async()=>{const box=await page.locator('canvas').boundingBox();return box.height;}).toBeLessThan(720);await Promise.all([
+  await expect.poll(async()=>{const box=await page.locator('canvas').boundingBox();return box.height;}).toBe(720);await Promise.all([
    page.waitForEvent('framenavigated',{predicate:frame=>frame===page.mainFrame(),timeout:15000}),
    second.waitForEvent('framenavigated',{predicate:frame=>frame===second.mainFrame(),timeout:15000}),
    page.locator('#update').click()
@@ -116,7 +116,7 @@ test('safe-area insets and update banner leave the full canvas visible',async({p
  await page.setViewportSize({width:390,height:844});await ready(page);
  await page.evaluate(()=>{const style=document.documentElement.style;style.setProperty('--safe-top','59px');style.setProperty('--safe-bottom','34px');style.setProperty('--safe-left','4px');style.setProperty('--safe-right','4px');});
  let canvas=await page.locator('canvas').boundingBox();expect(canvas.y).toBe(59);expect(canvas.x).toBe(4);expect(canvas.height).toBe(751);expect(canvas.width).toBe(382);
- await page.evaluate(()=>document.body.classList.add('update-ready'));
- canvas=await page.locator('canvas').boundingBox();expect(canvas.height).toBe(699);expect(canvas.y+canvas.height).toBeLessThanOrEqual(844-34-52);
+ await page.evaluate(()=>{document.querySelector('#update').hidden=false;});
+ canvas=await page.locator('canvas').boundingBox();expect(canvas.height).toBe(751);expect(canvas.y+canvas.height).toBe(844-34);
  await page.locator('canvas').focus();await page.keyboard.type('25+36=');await expect(page.locator('#calculator-status')).toContainText('1:01');
 });
