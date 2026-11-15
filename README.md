@@ -86,6 +86,6 @@ MIT, Copyright 2026 Andreas Guther. Rechenregeln, Referenzcode, Icons und Gestal
 stammen aus `aguther/simple-calculator` (Referenzcommit `0274b42`). Der originale
 JavaScript-Kern und extrahierte Zustandsfunktionen unter `tests/reference/` dienen
 nur dem synthetischen Vergleich; ausgelieferte Berechnungen laufen in Rust.
-Die mit egui gelieferten Schriften werden eingebettet. Vollständige verfügbare
+Noto Sans (Regular/SemiBold, SIL OFL 1.1) und die mit egui gelieferten Fallback-Schriften werden eingebettet. Vollständige verfügbare
 Lizenztexte der Cargo-Abhängigkeiten einschließlich Schriften werden den
 Desktop-Archiven beigelegt und als THIRD_PARTY_LICENSES.txt im Web-Build ausgeliefert.

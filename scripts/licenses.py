@@ -22,5 +22,6 @@ def collect():
         sections.append('\n'+'='*72+'\n'+name+'\nLicense: '+metadata.get('license','See license file')+'\n')
         for file in sorted(texts):
             sections.append('\n--- '+file.relative_to(source).as_posix()+' ---\n'+file.read_text(encoding='utf-8',errors='replace')+'\n')
+    sections.append('\nNoto Sans (Regular and SemiBold)\n'+(ROOT/'assets/fonts/OFL.txt').read_text(encoding='utf-8'))
     return '\n'.join(sections)
 if __name__=='__main__':print(collect())
