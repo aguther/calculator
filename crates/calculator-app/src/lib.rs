@@ -873,18 +873,22 @@ impl CalculatorApp {
         }
         let center = undo_rect.center();
         let stroke = egui::Stroke::new(2.0_f32, ui.visuals().weak_text_color());
-        let points = (0..=16)
+        let arc_center = center + Vec2::new(0.0, 2.0);
+        let points = (0..=24)
             .map(|index| {
-                let angle = -2.4 + index as f32 * 4.7 / 16.0;
-                center + Vec2::angled(angle) * 7.0
+                let angle =
+                    -std::f32::consts::FRAC_PI_2 + index as f32 * std::f32::consts::PI * 1.4 / 24.0;
+                arc_center + Vec2::angled(angle) * 7.0
             })
             .collect();
         ui.painter().add(egui::Shape::line(points, stroke));
-        let tip = center + Vec2::angled(-2.4) * 7.0;
+        let tip = center + Vec2::new(-8.0, -5.0);
         ui.painter()
-            .line_segment([tip, tip + Vec2::new(-1.0, -5.0)], stroke);
-        ui.painter()
-            .line_segment([tip, tip + Vec2::new(5.0, -1.0)], stroke);
+            .line_segment([tip, center + Vec2::new(0.0, -5.0)], stroke);
+        ui.painter().add(egui::Shape::line(
+            vec![tip + Vec2::new(5.0, -5.0), tip, tip + Vec2::new(5.0, 5.0)],
+            stroke,
+        ));
         paint_text(
             ui,
             egui::Rect::from_min_max(r.min, egui::pos2(r.left() + 60.0, r.bottom())),
