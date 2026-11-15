@@ -1077,6 +1077,67 @@ fn symbol(c: char) -> &'static str {
     }
 }
 impl eframe::App for CalculatorApp {
+    fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
+        let focus_changed = raw
+            .events
+            .iter()
+            .any(|e| matches!(e, egui::Event::WindowFocused(_)));
+        let touch_canceled = raw.events.iter().any(|e| {
+            matches!(
+                e,
+                egui::Event::Touch {
+                    phase: egui::TouchPhase::Cancel,
+                    ..
+                }
+            )
+        });
+        if focus_changed || !raw.focused || touch_canceled {
+            // eframe sends Touch::Cancel without releasing its emulated pointer.
+            // Reset before egui computes widget interaction; a synthetic release
+            // could otherwise click the key that was held when iOS suspended us.
+            ctx.input_mut(|i| i.pointer = egui::PointerState::default());
+            ctx.stop_dragging();
+            let canceled_at = raw.events.iter().rposition(|e| {
+                matches!(
+                    e,
+                    egui::Event::WindowFocused(false)
+                        | egui::Event::Touch {
+                            phase: egui::TouchPhase::Cancel,
+                            ..
+                        }
+                )
+            });
+            let lost_focus_at = raw
+                .events
+                .iter()
+                .rposition(|e| matches!(e, egui::Event::WindowFocused(false)));
+            let focused = raw.focused;
+            let mut index = 0;
+            raw.events.retain(|e| {
+                let stale_pointer = (!focused || canceled_at.is_some_and(|last| index <= last))
+                    && matches!(
+                        e,
+                        egui::Event::PointerMoved(_)
+                            | egui::Event::PointerButton { .. }
+                            | egui::Event::PointerGone
+                            | egui::Event::MouseMoved(_)
+                    );
+                let stale_touch = (!focused || lost_focus_at.is_some_and(|last| index <= last))
+                    && matches!(e, egui::Event::Touch { .. });
+                index += 1;
+                !stale_pointer && !stale_touch
+            });
+            if focus_changed || !raw.focused {
+                self.touch.cancel();
+                ctx.memory_mut(|m| {
+                    if let Some(id) = m.focused() {
+                        m.surrender_focus(id);
+                    }
+                });
+            }
+        }
+    }
+
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let events = ctx.input(|i| i.events.clone());
         let size = ctx.content_rect().size();
@@ -1171,6 +1232,93 @@ mod touch;
 #[cfg(test)]
 mod rendering_tests {
     use super::*;
+    #[test]
+    fn interrupted_touch_does_not_leave_a_pressed_or_hovered_key() {
+        for interruption in [
+            egui::Event::WindowFocused(false),
+            egui::Event::WindowFocused(true),
+            egui::Event::Touch {
+                device_id: egui::TouchDeviceId(0),
+                id: egui::TouchId(1),
+                phase: egui::TouchPhase::Cancel,
+                pos: egui::pos2(50.0, 50.0),
+                force: None,
+            },
+        ] {
+            let ctx = egui::Context::default();
+            let mut app = CalculatorApp::default();
+            let pos = egui::pos2(50.0, 50.0);
+            let mut clicks = 0;
+            for step in 0..4 {
+                let mut raw = egui::RawInput {
+                    events: match step {
+                        1 => vec![
+                            egui::Event::PointerMoved(pos),
+                            egui::Event::PointerButton {
+                                pos,
+                                button: egui::PointerButton::Primary,
+                                pressed: true,
+                                modifiers: egui::Modifiers::NONE,
+                            },
+                        ],
+                        2 => vec![interruption.clone()],
+                        3 => vec![egui::Event::WindowFocused(true)],
+                        _ => vec![],
+                    },
+                    ..Default::default()
+                };
+                eframe::App::raw_input_hook(&mut app, &ctx, &mut raw);
+                let _ = ctx.run(raw, |ctx| {
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        clicks += ui
+                            .add_sized([100.0, 100.0], egui::Button::new("1"))
+                            .clicked() as usize;
+                    });
+                });
+                if step == 1 {
+                    assert!(ctx.input(|i| i.pointer.any_down()));
+                }
+            }
+            assert!(
+                !ctx.input(|i| i.pointer.any_down()),
+                "Interrupted press survived reopening: {interruption:?}"
+            );
+            assert!(
+                !ctx.input(|i| i.pointer.has_pointer()),
+                "Stale pointer still highlights a key"
+            );
+            assert_eq!(clicks, 0, "Canceling a press must not activate its key");
+
+            // A fresh press after returning must still work normally.
+            for pressed in [true, false] {
+                let mut raw = egui::RawInput {
+                    events: vec![
+                        egui::Event::PointerMoved(pos),
+                        egui::Event::PointerButton {
+                            pos,
+                            button: egui::PointerButton::Primary,
+                            pressed,
+                            modifiers: egui::Modifiers::NONE,
+                        },
+                    ],
+                    ..Default::default()
+                };
+                if pressed {
+                    raw.events.insert(0, egui::Event::WindowFocused(true));
+                }
+                eframe::App::raw_input_hook(&mut app, &ctx, &mut raw);
+                let _ = ctx.run(raw, |ctx| {
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        clicks += ui
+                            .add_sized([100.0, 100.0], egui::Button::new("1"))
+                            .clicked() as usize;
+                    });
+                });
+            }
+            assert_eq!(clicks, 1, "New presses must work after reopening");
+        }
+    }
+
     #[test]
     fn history_side_moves_the_panel_and_keeps_keys_bounded() {
         for (width, height) in [
