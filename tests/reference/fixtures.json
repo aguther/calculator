@@ -1,0 +1,5602 @@
+[
+  {
+    "kind": "parse",
+    "input": "",
+    "expected": 0
+  },
+  {
+    "kind": "parse",
+    "input": "0",
+    "expected": 0
+  },
+  {
+    "kind": "parse",
+    "input": "45",
+    "expected": 2700
+  },
+  {
+    "kind": "parse",
+    "input": "145",
+    "expected": 6300
+  },
+  {
+    "kind": "parse",
+    "input": "1230",
+    "expected": 45000
+  },
+  {
+    "kind": "parse",
+    "input": "1:2",
+    "expected": 3720
+  },
+  {
+    "kind": "parse",
+    "input": "1::15",
+    "expected": 3615
+  },
+  {
+    "kind": "parse",
+    "input": "-145",
+    "expected": -6300
+  },
+  {
+    "kind": "parse",
+    "input": "999999999",
+    "expected": 36000002340
+  },
+  {
+    "kind": "parse",
+    "input": "99:99:99",
+    "expected": 362439
+  },
+  {
+    "kind": "time",
+    "input": 0,
+    "expected": "0:00"
+  },
+  {
+    "kind": "number",
+    "input": 0,
+    "expected": "0"
+  },
+  {
+    "kind": "time",
+    "input": -0.5,
+    "expected": "−0:00"
+  },
+  {
+    "kind": "number",
+    "input": -0.5,
+    "expected": "-0.5"
+  },
+  {
+    "kind": "time",
+    "input": -1.5,
+    "expected": "−0:00:01"
+  },
+  {
+    "kind": "number",
+    "input": -1.5,
+    "expected": "-1.5"
+  },
+  {
+    "kind": "time",
+    "input": 0.5,
+    "expected": "0:00:01"
+  },
+  {
+    "kind": "number",
+    "input": 0.5,
+    "expected": "0.5"
+  },
+  {
+    "kind": "time",
+    "input": 59.5,
+    "expected": "0:01"
+  },
+  {
+    "kind": "number",
+    "input": 59.5,
+    "expected": "59.5"
+  },
+  {
+    "kind": "time",
+    "input": -2700,
+    "expected": "−0:45"
+  },
+  {
+    "kind": "number",
+    "input": -2700,
+    "expected": "-2 700"
+  },
+  {
+    "kind": "time",
+    "input": 3600,
+    "expected": "1:00"
+  },
+  {
+    "kind": "number",
+    "input": 3600,
+    "expected": "3 600"
+  },
+  {
+    "kind": "time",
+    "input": 3615,
+    "expected": "1:00:15"
+  },
+  {
+    "kind": "number",
+    "input": 3615,
+    "expected": "3 615"
+  },
+  {
+    "kind": "time",
+    "input": 1.2345675,
+    "expected": "0:00:01"
+  },
+  {
+    "kind": "number",
+    "input": 1.2345675,
+    "expected": "1.234568"
+  },
+  {
+    "kind": "time",
+    "input": -1.2345675,
+    "expected": "−0:00:01"
+  },
+  {
+    "kind": "number",
+    "input": -1.2345675,
+    "expected": "-1.234567"
+  },
+  {
+    "kind": "time",
+    "input": 999999999999,
+    "expected": "277 777 777:46:39"
+  },
+  {
+    "kind": "number",
+    "input": 999999999999,
+    "expected": "999 999 999 999.0001"
+  },
+  {
+    "kind": "time",
+    "input": 1e+21,
+    "expected": "277 777 777 777 777 800:46:40"
+  },
+  {
+    "kind": "number",
+    "input": 1e+21,
+    "expected": "1e+21"
+  },
+  {
+    "kind": "time",
+    "input": 1e-7,
+    "expected": "0:00"
+  },
+  {
+    "kind": "number",
+    "input": 1e-7,
+    "expected": "0"
+  },
+  {
+    "kind": "time",
+    "input": 4503599627370497,
+    "expected": "1 250 999 896 491:48:17"
+  },
+  {
+    "kind": "number",
+    "input": 4503599627370497,
+    "expected": "4 503 599 627 370 497"
+  },
+  {
+    "kind": "time",
+    "input": 4503599627.370497,
+    "expected": "1 250 999:53:47"
+  },
+  {
+    "kind": "number",
+    "input": 4503599627.370497,
+    "expected": "4 503 599 627.370497"
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4273,
+        "op": null
+      },
+      {
+        "value": 50,
+        "op": "-"
+      },
+      {
+        "value": 38,
+        "op": "*"
+      }
+    ],
+    "expected": 2373
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4188,
+        "op": null
+      },
+      {
+        "value": 93,
+        "op": "+"
+      },
+      {
+        "value": 76,
+        "op": "*"
+      }
+    ],
+    "expected": 11256
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3867,
+        "op": null
+      },
+      {
+        "value": 72,
+        "op": "/"
+      },
+      {
+        "value": 33,
+        "op": "*"
+      }
+    ],
+    "expected": 1772.375
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3294,
+        "op": null
+      },
+      {
+        "value": 41,
+        "op": "*"
+      },
+      {
+        "value": 86,
+        "op": "*"
+      }
+    ],
+    "expected": 11614644
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8261,
+        "op": null
+      },
+      {
+        "value": 33,
+        "op": "-"
+      },
+      {
+        "value": 20,
+        "op": "*"
+      }
+    ],
+    "expected": 7601
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5632,
+        "op": null
+      },
+      {
+        "value": 69,
+        "op": "+"
+      },
+      {
+        "value": 82,
+        "op": "*"
+      }
+    ],
+    "expected": 11290
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8495,
+        "op": null
+      },
+      {
+        "value": 35,
+        "op": "/"
+      },
+      {
+        "value": 14,
+        "op": "*"
+      }
+    ],
+    "expected": 3398
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1842,
+        "op": null
+      },
+      {
+        "value": 30,
+        "op": "*"
+      },
+      {
+        "value": 64,
+        "op": "*"
+      }
+    ],
+    "expected": 3536640
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1289,
+        "op": null
+      },
+      {
+        "value": 62,
+        "op": "-"
+      },
+      {
+        "value": 67,
+        "op": "*"
+      }
+    ],
+    "expected": -2865
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1684,
+        "op": null
+      },
+      {
+        "value": 95,
+        "op": "+"
+      },
+      {
+        "value": 85,
+        "op": "*"
+      }
+    ],
+    "expected": 9759
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7795,
+        "op": null
+      },
+      {
+        "value": 67,
+        "op": "/"
+      },
+      {
+        "value": 16,
+        "op": "*"
+      }
+    ],
+    "expected": 1861.4925373134329
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5206,
+        "op": null
+      },
+      {
+        "value": 85,
+        "op": "*"
+      },
+      {
+        "value": 47,
+        "op": "*"
+      }
+    ],
+    "expected": 20797970
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3069,
+        "op": null
+      },
+      {
+        "value": 89,
+        "op": "-"
+      },
+      {
+        "value": 75,
+        "op": "*"
+      }
+    ],
+    "expected": -3606
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6152,
+        "op": null
+      },
+      {
+        "value": 37,
+        "op": "+"
+      },
+      {
+        "value": 57,
+        "op": "*"
+      }
+    ],
+    "expected": 8261
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8183,
+        "op": null
+      },
+      {
+        "value": 3,
+        "op": "/"
+      },
+      {
+        "value": 91,
+        "op": "*"
+      }
+    ],
+    "expected": 248217.66666666666
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8954,
+        "op": null
+      },
+      {
+        "value": 35,
+        "op": "*"
+      },
+      {
+        "value": 48,
+        "op": "*"
+      }
+    ],
+    "expected": 15042720
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6497,
+        "op": null
+      },
+      {
+        "value": 31,
+        "op": "-"
+      },
+      {
+        "value": 89,
+        "op": "*"
+      }
+    ],
+    "expected": 3738
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8076,
+        "op": null
+      },
+      {
+        "value": 37,
+        "op": "+"
+      },
+      {
+        "value": 65,
+        "op": "*"
+      }
+    ],
+    "expected": 10481
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5403,
+        "op": null
+      },
+      {
+        "value": 67,
+        "op": "/"
+      },
+      {
+        "value": 92,
+        "op": "*"
+      }
+    ],
+    "expected": 7419.044776119403
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 78,
+        "op": null
+      },
+      {
+        "value": 13,
+        "op": "*"
+      },
+      {
+        "value": 93,
+        "op": "*"
+      }
+    ],
+    "expected": 94302
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5445,
+        "op": null
+      },
+      {
+        "value": 98,
+        "op": "-"
+      },
+      {
+        "value": 79,
+        "op": "*"
+      }
+    ],
+    "expected": -2297
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2688,
+        "op": null
+      },
+      {
+        "value": 66,
+        "op": "+"
+      },
+      {
+        "value": 31,
+        "op": "*"
+      }
+    ],
+    "expected": 4734
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9119,
+        "op": null
+      },
+      {
+        "value": 3,
+        "op": "/"
+      },
+      {
+        "value": 51,
+        "op": "*"
+      }
+    ],
+    "expected": 155023
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3922,
+        "op": null
+      },
+      {
+        "value": 42,
+        "op": "*"
+      },
+      {
+        "value": 72,
+        "op": "*"
+      }
+    ],
+    "expected": 11860128
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6697,
+        "op": null
+      },
+      {
+        "value": 56,
+        "op": "-"
+      },
+      {
+        "value": 9,
+        "op": "*"
+      }
+    ],
+    "expected": 6193
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9844,
+        "op": null
+      },
+      {
+        "value": 100,
+        "op": "+"
+      },
+      {
+        "value": 38,
+        "op": "*"
+      }
+    ],
+    "expected": 13644
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2259,
+        "op": null
+      },
+      {
+        "value": 100,
+        "op": "/"
+      },
+      {
+        "value": 78,
+        "op": "*"
+      }
+    ],
+    "expected": 1762.02
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3158,
+        "op": null
+      },
+      {
+        "value": 35,
+        "op": "*"
+      },
+      {
+        "value": 56,
+        "op": "*"
+      }
+    ],
+    "expected": 6189680
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5965,
+        "op": null
+      },
+      {
+        "value": 57,
+        "op": "-"
+      },
+      {
+        "value": 1,
+        "op": "*"
+      }
+    ],
+    "expected": 5908
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5464,
+        "op": null
+      },
+      {
+        "value": 59,
+        "op": "+"
+      },
+      {
+        "value": 79,
+        "op": "*"
+      }
+    ],
+    "expected": 10125
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4503,
+        "op": null
+      },
+      {
+        "value": 37,
+        "op": "/"
+      },
+      {
+        "value": 72,
+        "op": "*"
+      }
+    ],
+    "expected": 8762.594594594595
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7706,
+        "op": null
+      },
+      {
+        "value": 10,
+        "op": "*"
+      },
+      {
+        "value": 12,
+        "op": "*"
+      }
+    ],
+    "expected": 924720
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2193,
+        "op": null
+      },
+      {
+        "value": 23,
+        "op": "-"
+      },
+      {
+        "value": 93,
+        "op": "*"
+      }
+    ],
+    "expected": 54
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3804,
+        "op": null
+      },
+      {
+        "value": 20,
+        "op": "+"
+      },
+      {
+        "value": 100,
+        "op": "*"
+      }
+    ],
+    "expected": 5804
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 827,
+        "op": null
+      },
+      {
+        "value": 10,
+        "op": "/"
+      },
+      {
+        "value": 25,
+        "op": "*"
+      }
+    ],
+    "expected": 2067.5
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3518,
+        "op": null
+      },
+      {
+        "value": 61,
+        "op": "*"
+      },
+      {
+        "value": 54,
+        "op": "*"
+      }
+    ],
+    "expected": 11588292
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6997,
+        "op": null
+      },
+      {
+        "value": 92,
+        "op": "-"
+      },
+      {
+        "value": 82,
+        "op": "*"
+      }
+    ],
+    "expected": -547
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3008,
+        "op": null
+      },
+      {
+        "value": 6,
+        "op": "+"
+      },
+      {
+        "value": 40,
+        "op": "*"
+      }
+    ],
+    "expected": 3248
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1103,
+        "op": null
+      },
+      {
+        "value": 31,
+        "op": "/"
+      },
+      {
+        "value": 21,
+        "op": "*"
+      }
+    ],
+    "expected": 747.1935483870967
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1138,
+        "op": null
+      },
+      {
+        "value": 11,
+        "op": "*"
+      },
+      {
+        "value": 96,
+        "op": "*"
+      }
+    ],
+    "expected": 1201728
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2201,
+        "op": null
+      },
+      {
+        "value": 67,
+        "op": "-"
+      },
+      {
+        "value": 100,
+        "op": "*"
+      }
+    ],
+    "expected": -4499
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3780,
+        "op": null
+      },
+      {
+        "value": 1,
+        "op": "+"
+      },
+      {
+        "value": 76,
+        "op": "*"
+      }
+    ],
+    "expected": 3856
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 723,
+        "op": null
+      },
+      {
+        "value": 33,
+        "op": "/"
+      },
+      {
+        "value": 18,
+        "op": "*"
+      }
+    ],
+    "expected": 394.3636363636364
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 502,
+        "op": null
+      },
+      {
+        "value": 17,
+        "op": "*"
+      },
+      {
+        "value": 57,
+        "op": "*"
+      }
+    ],
+    "expected": 486438
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6525,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "-"
+      },
+      {
+        "value": 20,
+        "op": "*"
+      }
+    ],
+    "expected": 5165
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5640,
+        "op": null
+      },
+      {
+        "value": 26,
+        "op": "+"
+      },
+      {
+        "value": 24,
+        "op": "*"
+      }
+    ],
+    "expected": 6264
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7,
+        "op": null
+      },
+      {
+        "value": 35,
+        "op": "/"
+      },
+      {
+        "value": 82,
+        "op": "*"
+      }
+    ],
+    "expected": 16.400000000000002
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 10,
+        "op": null
+      },
+      {
+        "value": 77,
+        "op": "*"
+      },
+      {
+        "value": 11,
+        "op": "*"
+      }
+    ],
+    "expected": 8470
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9921,
+        "op": null
+      },
+      {
+        "value": 88,
+        "op": "-"
+      },
+      {
+        "value": 34,
+        "op": "*"
+      }
+    ],
+    "expected": 6929
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9148,
+        "op": null
+      },
+      {
+        "value": 39,
+        "op": "+"
+      },
+      {
+        "value": 21,
+        "op": "*"
+      }
+    ],
+    "expected": 9967
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1163,
+        "op": null
+      },
+      {
+        "value": 5,
+        "op": "/"
+      },
+      {
+        "value": 41,
+        "op": "*"
+      }
+    ],
+    "expected": 9536.6
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6510,
+        "op": null
+      },
+      {
+        "value": 1,
+        "op": "*"
+      },
+      {
+        "value": 30,
+        "op": "*"
+      }
+    ],
+    "expected": 195300
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8373,
+        "op": null
+      },
+      {
+        "value": 89,
+        "op": "-"
+      },
+      {
+        "value": 51,
+        "op": "*"
+      }
+    ],
+    "expected": 3834
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 16,
+        "op": null
+      },
+      {
+        "value": 94,
+        "op": "+"
+      },
+      {
+        "value": 18,
+        "op": "*"
+      }
+    ],
+    "expected": 1708
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3087,
+        "op": null
+      },
+      {
+        "value": 59,
+        "op": "/"
+      },
+      {
+        "value": 87,
+        "op": "*"
+      }
+    ],
+    "expected": 4552.016949152542
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1090,
+        "op": null
+      },
+      {
+        "value": 36,
+        "op": "*"
+      },
+      {
+        "value": 60,
+        "op": "*"
+      }
+    ],
+    "expected": 2354400
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5081,
+        "op": null
+      },
+      {
+        "value": 73,
+        "op": "-"
+      },
+      {
+        "value": 45,
+        "op": "*"
+      }
+    ],
+    "expected": 1796
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4180,
+        "op": null
+      },
+      {
+        "value": 47,
+        "op": "+"
+      },
+      {
+        "value": 29,
+        "op": "*"
+      }
+    ],
+    "expected": 5543
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9427,
+        "op": null
+      },
+      {
+        "value": 6,
+        "op": "/"
+      },
+      {
+        "value": 2,
+        "op": "*"
+      }
+    ],
+    "expected": 3142.3333333333335
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8006,
+        "op": null
+      },
+      {
+        "value": 58,
+        "op": "*"
+      },
+      {
+        "value": 64,
+        "op": "*"
+      }
+    ],
+    "expected": 29718272
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4237,
+        "op": null
+      },
+      {
+        "value": 72,
+        "op": "-"
+      },
+      {
+        "value": 65,
+        "op": "*"
+      }
+    ],
+    "expected": -443
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6104,
+        "op": null
+      },
+      {
+        "value": 40,
+        "op": "+"
+      },
+      {
+        "value": 100,
+        "op": "*"
+      }
+    ],
+    "expected": 10104
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3847,
+        "op": null
+      },
+      {
+        "value": 89,
+        "op": "/"
+      },
+      {
+        "value": 78,
+        "op": "*"
+      }
+    ],
+    "expected": 3371.5280898876404
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9882,
+        "op": null
+      },
+      {
+        "value": 72,
+        "op": "*"
+      },
+      {
+        "value": 24,
+        "op": "*"
+      }
+    ],
+    "expected": 17076096
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4513,
+        "op": null
+      },
+      {
+        "value": 96,
+        "op": "-"
+      },
+      {
+        "value": 49,
+        "op": "*"
+      }
+    ],
+    "expected": -191
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1148,
+        "op": null
+      },
+      {
+        "value": 35,
+        "op": "+"
+      },
+      {
+        "value": 93,
+        "op": "*"
+      }
+    ],
+    "expected": 4403
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5851,
+        "op": null
+      },
+      {
+        "value": 92,
+        "op": "/"
+      },
+      {
+        "value": 5,
+        "op": "*"
+      }
+    ],
+    "expected": 317.9891304347826
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2862,
+        "op": null
+      },
+      {
+        "value": 1,
+        "op": "*"
+      },
+      {
+        "value": 75,
+        "op": "*"
+      }
+    ],
+    "expected": 214650
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5637,
+        "op": null
+      },
+      {
+        "value": 35,
+        "op": "-"
+      },
+      {
+        "value": 35,
+        "op": "*"
+      }
+    ],
+    "expected": 4412
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4400,
+        "op": null
+      },
+      {
+        "value": 79,
+        "op": "+"
+      },
+      {
+        "value": 98,
+        "op": "*"
+      }
+    ],
+    "expected": 12142
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3727,
+        "op": null
+      },
+      {
+        "value": 63,
+        "op": "/"
+      },
+      {
+        "value": 73,
+        "op": "*"
+      }
+    ],
+    "expected": 4318.587301587301
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1202,
+        "op": null
+      },
+      {
+        "value": 21,
+        "op": "*"
+      },
+      {
+        "value": 74,
+        "op": "*"
+      }
+    ],
+    "expected": 1867908
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 201,
+        "op": null
+      },
+      {
+        "value": 20,
+        "op": "-"
+      },
+      {
+        "value": 93,
+        "op": "*"
+      }
+    ],
+    "expected": -1659
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2340,
+        "op": null
+      },
+      {
+        "value": 52,
+        "op": "+"
+      },
+      {
+        "value": 60,
+        "op": "*"
+      }
+    ],
+    "expected": 5460
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8867,
+        "op": null
+      },
+      {
+        "value": 35,
+        "op": "/"
+      },
+      {
+        "value": 90,
+        "op": "*"
+      }
+    ],
+    "expected": 22800.857142857145
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3222,
+        "op": null
+      },
+      {
+        "value": 52,
+        "op": "*"
+      },
+      {
+        "value": 33,
+        "op": "*"
+      }
+    ],
+    "expected": 5528952
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4157,
+        "op": null
+      },
+      {
+        "value": 43,
+        "op": "-"
+      },
+      {
+        "value": 58,
+        "op": "*"
+      }
+    ],
+    "expected": 1663
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3944,
+        "op": null
+      },
+      {
+        "value": 50,
+        "op": "+"
+      },
+      {
+        "value": 42,
+        "op": "*"
+      }
+    ],
+    "expected": 6044
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8455,
+        "op": null
+      },
+      {
+        "value": 71,
+        "op": "/"
+      },
+      {
+        "value": 97,
+        "op": "*"
+      }
+    ],
+    "expected": 11551.197183098591
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3386,
+        "op": null
+      },
+      {
+        "value": 39,
+        "op": "*"
+      },
+      {
+        "value": 1,
+        "op": "*"
+      }
+    ],
+    "expected": 132054
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6177,
+        "op": null
+      },
+      {
+        "value": 17,
+        "op": "-"
+      },
+      {
+        "value": 92,
+        "op": "*"
+      }
+    ],
+    "expected": 4613
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4204,
+        "op": null
+      },
+      {
+        "value": 6,
+        "op": "+"
+      },
+      {
+        "value": 41,
+        "op": "*"
+      }
+    ],
+    "expected": 4450
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9019,
+        "op": null
+      },
+      {
+        "value": 59,
+        "op": "/"
+      },
+      {
+        "value": 90,
+        "op": "*"
+      }
+    ],
+    "expected": 13757.796610169491
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5518,
+        "op": null
+      },
+      {
+        "value": 85,
+        "op": "*"
+      },
+      {
+        "value": 16,
+        "op": "*"
+      }
+    ],
+    "expected": 7504480
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3493,
+        "op": null
+      },
+      {
+        "value": 13,
+        "op": "-"
+      },
+      {
+        "value": 22,
+        "op": "*"
+      }
+    ],
+    "expected": 3207
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4912,
+        "op": null
+      },
+      {
+        "value": 51,
+        "op": "+"
+      },
+      {
+        "value": 38,
+        "op": "*"
+      }
+    ],
+    "expected": 6850
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2559,
+        "op": null
+      },
+      {
+        "value": 100,
+        "op": "/"
+      },
+      {
+        "value": 77,
+        "op": "*"
+      }
+    ],
+    "expected": 1970.43
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9650,
+        "op": null
+      },
+      {
+        "value": 62,
+        "op": "*"
+      },
+      {
+        "value": 78,
+        "op": "*"
+      }
+    ],
+    "expected": 46667400
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1001,
+        "op": null
+      },
+      {
+        "value": 47,
+        "op": "-"
+      },
+      {
+        "value": 8,
+        "op": "*"
+      }
+    ],
+    "expected": 625
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7444,
+        "op": null
+      },
+      {
+        "value": 81,
+        "op": "+"
+      },
+      {
+        "value": 38,
+        "op": "*"
+      }
+    ],
+    "expected": 10522
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5731,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "/"
+      },
+      {
+        "value": 16,
+        "op": "*"
+      }
+    ],
+    "expected": 1348.4705882352941
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 598,
+        "op": null
+      },
+      {
+        "value": 6,
+        "op": "*"
+      },
+      {
+        "value": 58,
+        "op": "*"
+      }
+    ],
+    "expected": 208104
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1421,
+        "op": null
+      },
+      {
+        "value": 39,
+        "op": "-"
+      },
+      {
+        "value": 98,
+        "op": "*"
+      }
+    ],
+    "expected": -2401
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1192,
+        "op": null
+      },
+      {
+        "value": 29,
+        "op": "+"
+      },
+      {
+        "value": 85,
+        "op": "*"
+      }
+    ],
+    "expected": 3657
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6631,
+        "op": null
+      },
+      {
+        "value": 81,
+        "op": "/"
+      },
+      {
+        "value": 63,
+        "op": "*"
+      }
+    ],
+    "expected": 5157.444444444445
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1450,
+        "op": null
+      },
+      {
+        "value": 66,
+        "op": "*"
+      },
+      {
+        "value": 15,
+        "op": "*"
+      }
+    ],
+    "expected": 1435500
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8529,
+        "op": null
+      },
+      {
+        "value": 85,
+        "op": "-"
+      },
+      {
+        "value": 43,
+        "op": "*"
+      }
+    ],
+    "expected": 4874
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3836,
+        "op": null
+      },
+      {
+        "value": 73,
+        "op": "+"
+      },
+      {
+        "value": 10,
+        "op": "*"
+      }
+    ],
+    "expected": 4566
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1419,
+        "op": null
+      },
+      {
+        "value": 98,
+        "op": "/"
+      },
+      {
+        "value": 53,
+        "op": "*"
+      }
+    ],
+    "expected": 767.4183673469388
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2894,
+        "op": null
+      },
+      {
+        "value": 88,
+        "op": "*"
+      },
+      {
+        "value": 36,
+        "op": "*"
+      }
+    ],
+    "expected": 9168192
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5461,
+        "op": null
+      },
+      {
+        "value": 42,
+        "op": "-"
+      },
+      {
+        "value": 58,
+        "op": "*"
+      }
+    ],
+    "expected": 3025
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7536,
+        "op": null
+      },
+      {
+        "value": 75,
+        "op": "+"
+      },
+      {
+        "value": 6,
+        "op": "*"
+      }
+    ],
+    "expected": 7986
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2751,
+        "op": null
+      },
+      {
+        "value": 96,
+        "op": "/"
+      },
+      {
+        "value": 14,
+        "op": "*"
+      }
+    ],
+    "expected": 401.1875
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4402,
+        "op": null
+      },
+      {
+        "value": 86,
+        "op": "*"
+      },
+      {
+        "value": 85,
+        "op": "*"
+      }
+    ],
+    "expected": 32178620
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 233,
+        "op": null
+      },
+      {
+        "value": 45,
+        "op": "-"
+      },
+      {
+        "value": 49,
+        "op": "*"
+      }
+    ],
+    "expected": -1972
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1956,
+        "op": null
+      },
+      {
+        "value": 78,
+        "op": "+"
+      },
+      {
+        "value": 12,
+        "op": "*"
+      }
+    ],
+    "expected": 2892
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9171,
+        "op": null
+      },
+      {
+        "value": 97,
+        "op": "/"
+      },
+      {
+        "value": 37,
+        "op": "*"
+      }
+    ],
+    "expected": 3498.216494845361
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 518,
+        "op": null
+      },
+      {
+        "value": 84,
+        "op": "*"
+      },
+      {
+        "value": 8,
+        "op": "*"
+      }
+    ],
+    "expected": 348096
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7645,
+        "op": null
+      },
+      {
+        "value": 94,
+        "op": "-"
+      },
+      {
+        "value": 68,
+        "op": "*"
+      }
+    ],
+    "expected": 1253
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4808,
+        "op": null
+      },
+      {
+        "value": 35,
+        "op": "+"
+      },
+      {
+        "value": 15,
+        "op": "*"
+      }
+    ],
+    "expected": 5333
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3479,
+        "op": null
+      },
+      {
+        "value": 3,
+        "op": "/"
+      },
+      {
+        "value": 67,
+        "op": "*"
+      }
+    ],
+    "expected": 77697.66666666667
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4314,
+        "op": null
+      },
+      {
+        "value": 92,
+        "op": "*"
+      },
+      {
+        "value": 31,
+        "op": "*"
+      }
+    ],
+    "expected": 12303528
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1473,
+        "op": null
+      },
+      {
+        "value": 86,
+        "op": "-"
+      },
+      {
+        "value": 91,
+        "op": "*"
+      }
+    ],
+    "expected": -6353
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4780,
+        "op": null
+      },
+      {
+        "value": 93,
+        "op": "+"
+      },
+      {
+        "value": 1,
+        "op": "*"
+      }
+    ],
+    "expected": 4873
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8587,
+        "op": null
+      },
+      {
+        "value": 65,
+        "op": "/"
+      },
+      {
+        "value": 95,
+        "op": "*"
+      }
+    ],
+    "expected": 12550.23076923077
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1694,
+        "op": null
+      },
+      {
+        "value": 96,
+        "op": "*"
+      },
+      {
+        "value": 24,
+        "op": "*"
+      }
+    ],
+    "expected": 3902976
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6501,
+        "op": null
+      },
+      {
+        "value": 84,
+        "op": "-"
+      },
+      {
+        "value": 28,
+        "op": "*"
+      }
+    ],
+    "expected": 4149
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 880,
+        "op": null
+      },
+      {
+        "value": 20,
+        "op": "+"
+      },
+      {
+        "value": 55,
+        "op": "*"
+      }
+    ],
+    "expected": 1980
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4671,
+        "op": null
+      },
+      {
+        "value": 80,
+        "op": "/"
+      },
+      {
+        "value": 96,
+        "op": "*"
+      }
+    ],
+    "expected": 5605.200000000001
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6850,
+        "op": null
+      },
+      {
+        "value": 27,
+        "op": "*"
+      },
+      {
+        "value": 93,
+        "op": "*"
+      }
+    ],
+    "expected": 17200350
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7433,
+        "op": null
+      },
+      {
+        "value": 72,
+        "op": "-"
+      },
+      {
+        "value": 16,
+        "op": "*"
+      }
+    ],
+    "expected": 6281
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9972,
+        "op": null
+      },
+      {
+        "value": 60,
+        "op": "+"
+      },
+      {
+        "value": 42,
+        "op": "*"
+      }
+    ],
+    "expected": 12492
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6259,
+        "op": null
+      },
+      {
+        "value": 34,
+        "op": "/"
+      },
+      {
+        "value": 29,
+        "op": "*"
+      }
+    ],
+    "expected": 5338.558823529412
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4822,
+        "op": null
+      },
+      {
+        "value": 26,
+        "op": "*"
+      },
+      {
+        "value": 48,
+        "op": "*"
+      }
+    ],
+    "expected": 6017856
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2733,
+        "op": null
+      },
+      {
+        "value": 94,
+        "op": "-"
+      },
+      {
+        "value": 56,
+        "op": "*"
+      }
+    ],
+    "expected": -2531
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3960,
+        "op": null
+      },
+      {
+        "value": 97,
+        "op": "+"
+      },
+      {
+        "value": 45,
+        "op": "*"
+      }
+    ],
+    "expected": 8325
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2679,
+        "op": null
+      },
+      {
+        "value": 17,
+        "op": "/"
+      },
+      {
+        "value": 12,
+        "op": "*"
+      }
+    ],
+    "expected": 1891.0588235294117
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4346,
+        "op": null
+      },
+      {
+        "value": 47,
+        "op": "*"
+      },
+      {
+        "value": 62,
+        "op": "*"
+      }
+    ],
+    "expected": 12664244
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5713,
+        "op": null
+      },
+      {
+        "value": 3,
+        "op": "-"
+      },
+      {
+        "value": 26,
+        "op": "*"
+      }
+    ],
+    "expected": 5635
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 156,
+        "op": null
+      },
+      {
+        "value": 84,
+        "op": "+"
+      },
+      {
+        "value": 59,
+        "op": "*"
+      }
+    ],
+    "expected": 5112
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7115,
+        "op": null
+      },
+      {
+        "value": 92,
+        "op": "/"
+      },
+      {
+        "value": 13,
+        "op": "*"
+      }
+    ],
+    "expected": 1005.3804347826086
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4062,
+        "op": null
+      },
+      {
+        "value": 32,
+        "op": "*"
+      },
+      {
+        "value": 7,
+        "op": "*"
+      }
+    ],
+    "expected": 909888
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2117,
+        "op": null
+      },
+      {
+        "value": 21,
+        "op": "-"
+      },
+      {
+        "value": 21,
+        "op": "*"
+      }
+    ],
+    "expected": 1676
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8048,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "+"
+      },
+      {
+        "value": 75,
+        "op": "*"
+      }
+    ],
+    "expected": 13148
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2415,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "/"
+      },
+      {
+        "value": 84,
+        "op": "*"
+      }
+    ],
+    "expected": 2983.2352941176473
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4626,
+        "op": null
+      },
+      {
+        "value": 56,
+        "op": "*"
+      },
+      {
+        "value": 39,
+        "op": "*"
+      }
+    ],
+    "expected": 10103184
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6953,
+        "op": null
+      },
+      {
+        "value": 18,
+        "op": "-"
+      },
+      {
+        "value": 65,
+        "op": "*"
+      }
+    ],
+    "expected": 5783
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1540,
+        "op": null
+      },
+      {
+        "value": 33,
+        "op": "+"
+      },
+      {
+        "value": 21,
+        "op": "*"
+      }
+    ],
+    "expected": 2233
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2035,
+        "op": null
+      },
+      {
+        "value": 19,
+        "op": "/"
+      },
+      {
+        "value": 57,
+        "op": "*"
+      }
+    ],
+    "expected": 6105
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6662,
+        "op": null
+      },
+      {
+        "value": 23,
+        "op": "*"
+      },
+      {
+        "value": 34,
+        "op": "*"
+      }
+    ],
+    "expected": 5209684
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2093,
+        "op": null
+      },
+      {
+        "value": 6,
+        "op": "-"
+      },
+      {
+        "value": 15,
+        "op": "*"
+      }
+    ],
+    "expected": 2003
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2712,
+        "op": null
+      },
+      {
+        "value": 60,
+        "op": "+"
+      },
+      {
+        "value": 24,
+        "op": "*"
+      }
+    ],
+    "expected": 4152
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3831,
+        "op": null
+      },
+      {
+        "value": 23,
+        "op": "/"
+      },
+      {
+        "value": 23,
+        "op": "*"
+      }
+    ],
+    "expected": 3831
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5082,
+        "op": null
+      },
+      {
+        "value": 86,
+        "op": "*"
+      },
+      {
+        "value": 9,
+        "op": "*"
+      }
+    ],
+    "expected": 3933468
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7265,
+        "op": null
+      },
+      {
+        "value": 71,
+        "op": "-"
+      },
+      {
+        "value": 28,
+        "op": "*"
+      }
+    ],
+    "expected": 5277
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2268,
+        "op": null
+      },
+      {
+        "value": 31,
+        "op": "+"
+      },
+      {
+        "value": 73,
+        "op": "*"
+      }
+    ],
+    "expected": 4531
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6587,
+        "op": null
+      },
+      {
+        "value": 43,
+        "op": "/"
+      },
+      {
+        "value": 76,
+        "op": "*"
+      }
+    ],
+    "expected": 11642.13953488372
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3102,
+        "op": null
+      },
+      {
+        "value": 80,
+        "op": "*"
+      },
+      {
+        "value": 75,
+        "op": "*"
+      }
+    ],
+    "expected": 18612000
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 165,
+        "op": null
+      },
+      {
+        "value": 31,
+        "op": "-"
+      },
+      {
+        "value": 56,
+        "op": "*"
+      }
+    ],
+    "expected": -1571
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9328,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "+"
+      },
+      {
+        "value": 98,
+        "op": "*"
+      }
+    ],
+    "expected": 15992
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3599,
+        "op": null
+      },
+      {
+        "value": 96,
+        "op": "/"
+      },
+      {
+        "value": 59,
+        "op": "*"
+      }
+    ],
+    "expected": 2211.885416666667
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6050,
+        "op": null
+      },
+      {
+        "value": 93,
+        "op": "*"
+      },
+      {
+        "value": 66,
+        "op": "*"
+      }
+    ],
+    "expected": 37134900
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1657,
+        "op": null
+      },
+      {
+        "value": 29,
+        "op": "-"
+      },
+      {
+        "value": 46,
+        "op": "*"
+      }
+    ],
+    "expected": 323
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8308,
+        "op": null
+      },
+      {
+        "value": 6,
+        "op": "+"
+      },
+      {
+        "value": 43,
+        "op": "*"
+      }
+    ],
+    "expected": 8566
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7667,
+        "op": null
+      },
+      {
+        "value": 80,
+        "op": "/"
+      },
+      {
+        "value": 35,
+        "op": "*"
+      }
+    ],
+    "expected": 3354.3125
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9798,
+        "op": null
+      },
+      {
+        "value": 37,
+        "op": "*"
+      },
+      {
+        "value": 52,
+        "op": "*"
+      }
+    ],
+    "expected": 18851352
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2221,
+        "op": null
+      },
+      {
+        "value": 45,
+        "op": "-"
+      },
+      {
+        "value": 6,
+        "op": "*"
+      }
+    ],
+    "expected": 1951
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1896,
+        "op": null
+      },
+      {
+        "value": 94,
+        "op": "+"
+      },
+      {
+        "value": 88,
+        "op": "*"
+      }
+    ],
+    "expected": 10168
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 615,
+        "op": null
+      },
+      {
+        "value": 1,
+        "op": "/"
+      },
+      {
+        "value": 7,
+        "op": "*"
+      }
+    ],
+    "expected": 4305
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2154,
+        "op": null
+      },
+      {
+        "value": 81,
+        "op": "*"
+      },
+      {
+        "value": 9,
+        "op": "*"
+      }
+    ],
+    "expected": 1570266
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9265,
+        "op": null
+      },
+      {
+        "value": 48,
+        "op": "-"
+      },
+      {
+        "value": 99,
+        "op": "*"
+      }
+    ],
+    "expected": 4513
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6364,
+        "op": null
+      },
+      {
+        "value": 43,
+        "op": "+"
+      },
+      {
+        "value": 37,
+        "op": "*"
+      }
+    ],
+    "expected": 7955
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5851,
+        "op": null
+      },
+      {
+        "value": 26,
+        "op": "/"
+      },
+      {
+        "value": 78,
+        "op": "*"
+      }
+    ],
+    "expected": 17553
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3806,
+        "op": null
+      },
+      {
+        "value": 72,
+        "op": "*"
+      },
+      {
+        "value": 26,
+        "op": "*"
+      }
+    ],
+    "expected": 7124832
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1845,
+        "op": null
+      },
+      {
+        "value": 12,
+        "op": "-"
+      },
+      {
+        "value": 61,
+        "op": "*"
+      }
+    ],
+    "expected": 1113
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4064,
+        "op": null
+      },
+      {
+        "value": 45,
+        "op": "+"
+      },
+      {
+        "value": 53,
+        "op": "*"
+      }
+    ],
+    "expected": 6449
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5887,
+        "op": null
+      },
+      {
+        "value": 8,
+        "op": "/"
+      },
+      {
+        "value": 71,
+        "op": "*"
+      }
+    ],
+    "expected": 52247.125
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1058,
+        "op": null
+      },
+      {
+        "value": 94,
+        "op": "*"
+      },
+      {
+        "value": 78,
+        "op": "*"
+      }
+    ],
+    "expected": 7757256
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6617,
+        "op": null
+      },
+      {
+        "value": 15,
+        "op": "-"
+      },
+      {
+        "value": 36,
+        "op": "*"
+      }
+    ],
+    "expected": 6077
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7028,
+        "op": null
+      },
+      {
+        "value": 72,
+        "op": "+"
+      },
+      {
+        "value": 65,
+        "op": "*"
+      }
+    ],
+    "expected": 11708
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4019,
+        "op": null
+      },
+      {
+        "value": 62,
+        "op": "/"
+      },
+      {
+        "value": 12,
+        "op": "*"
+      }
+    ],
+    "expected": 777.8709677419356
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6566,
+        "op": null
+      },
+      {
+        "value": 23,
+        "op": "*"
+      },
+      {
+        "value": 3,
+        "op": "*"
+      }
+    ],
+    "expected": 453054
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8733,
+        "op": null
+      },
+      {
+        "value": 49,
+        "op": "-"
+      },
+      {
+        "value": 10,
+        "op": "*"
+      }
+    ],
+    "expected": 8243
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9096,
+        "op": null
+      },
+      {
+        "value": 64,
+        "op": "+"
+      },
+      {
+        "value": 8,
+        "op": "*"
+      }
+    ],
+    "expected": 9608
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8951,
+        "op": null
+      },
+      {
+        "value": 71,
+        "op": "/"
+      },
+      {
+        "value": 7,
+        "op": "*"
+      }
+    ],
+    "expected": 882.4929577464789
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5034,
+        "op": null
+      },
+      {
+        "value": 44,
+        "op": "*"
+      },
+      {
+        "value": 39,
+        "op": "*"
+      }
+    ],
+    "expected": 8638344
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8369,
+        "op": null
+      },
+      {
+        "value": 8,
+        "op": "-"
+      },
+      {
+        "value": 59,
+        "op": "*"
+      }
+    ],
+    "expected": 7897
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4140,
+        "op": null
+      },
+      {
+        "value": 34,
+        "op": "+"
+      },
+      {
+        "value": 10,
+        "op": "*"
+      }
+    ],
+    "expected": 4480
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7659,
+        "op": null
+      },
+      {
+        "value": 34,
+        "op": "/"
+      },
+      {
+        "value": 74,
+        "op": "*"
+      }
+    ],
+    "expected": 16669.588235294115
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2094,
+        "op": null
+      },
+      {
+        "value": 27,
+        "op": "*"
+      },
+      {
+        "value": 4,
+        "op": "*"
+      }
+    ],
+    "expected": 226152
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7029,
+        "op": null
+      },
+      {
+        "value": 78,
+        "op": "-"
+      },
+      {
+        "value": 11,
+        "op": "*"
+      }
+    ],
+    "expected": 6171
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6048,
+        "op": null
+      },
+      {
+        "value": 29,
+        "op": "+"
+      },
+      {
+        "value": 38,
+        "op": "*"
+      }
+    ],
+    "expected": 7150
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3263,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "/"
+      },
+      {
+        "value": 88,
+        "op": "*"
+      }
+    ],
+    "expected": 4222.705882352941
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4018,
+        "op": null
+      },
+      {
+        "value": 87,
+        "op": "*"
+      },
+      {
+        "value": 86,
+        "op": "*"
+      }
+    ],
+    "expected": 30062676
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9849,
+        "op": null
+      },
+      {
+        "value": 14,
+        "op": "-"
+      },
+      {
+        "value": 17,
+        "op": "*"
+      }
+    ],
+    "expected": 9611
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6020,
+        "op": null
+      },
+      {
+        "value": 49,
+        "op": "+"
+      },
+      {
+        "value": 32,
+        "op": "*"
+      }
+    ],
+    "expected": 7588
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 883,
+        "op": null
+      },
+      {
+        "value": 95,
+        "op": "/"
+      },
+      {
+        "value": 84,
+        "op": "*"
+      }
+    ],
+    "expected": 780.757894736842
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9878,
+        "op": null
+      },
+      {
+        "value": 33,
+        "op": "*"
+      },
+      {
+        "value": 3,
+        "op": "*"
+      }
+    ],
+    "expected": 977922
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4653,
+        "op": null
+      },
+      {
+        "value": 20,
+        "op": "-"
+      },
+      {
+        "value": 37,
+        "op": "*"
+      }
+    ],
+    "expected": 3913
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3224,
+        "op": null
+      },
+      {
+        "value": 22,
+        "op": "+"
+      },
+      {
+        "value": 99,
+        "op": "*"
+      }
+    ],
+    "expected": 5402
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4343,
+        "op": null
+      },
+      {
+        "value": 17,
+        "op": "/"
+      },
+      {
+        "value": 13,
+        "op": "*"
+      }
+    ],
+    "expected": 3321.1176470588234
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1738,
+        "op": null
+      },
+      {
+        "value": 10,
+        "op": "*"
+      },
+      {
+        "value": 80,
+        "op": "*"
+      }
+    ],
+    "expected": 1390400
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1153,
+        "op": null
+      },
+      {
+        "value": 49,
+        "op": "-"
+      },
+      {
+        "value": 49,
+        "op": "*"
+      }
+    ],
+    "expected": -1248
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2092,
+        "op": null
+      },
+      {
+        "value": 21,
+        "op": "+"
+      },
+      {
+        "value": 54,
+        "op": "*"
+      }
+    ],
+    "expected": 3226
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4939,
+        "op": null
+      },
+      {
+        "value": 53,
+        "op": "/"
+      },
+      {
+        "value": 38,
+        "op": "*"
+      }
+    ],
+    "expected": 3541.1698113207544
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3038,
+        "op": null
+      },
+      {
+        "value": 59,
+        "op": "*"
+      },
+      {
+        "value": 86,
+        "op": "*"
+      }
+    ],
+    "expected": 15414812
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2549,
+        "op": null
+      },
+      {
+        "value": 100,
+        "op": "-"
+      },
+      {
+        "value": 44,
+        "op": "*"
+      }
+    ],
+    "expected": -1851
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 800,
+        "op": null
+      },
+      {
+        "value": 41,
+        "op": "+"
+      },
+      {
+        "value": 97,
+        "op": "*"
+      }
+    ],
+    "expected": 4777
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6079,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "/"
+      },
+      {
+        "value": 68,
+        "op": "*"
+      }
+    ],
+    "expected": 6079
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8994,
+        "op": null
+      },
+      {
+        "value": 15,
+        "op": "*"
+      },
+      {
+        "value": 39,
+        "op": "*"
+      }
+    ],
+    "expected": 5261490
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9785,
+        "op": null
+      },
+      {
+        "value": 97,
+        "op": "-"
+      },
+      {
+        "value": 24,
+        "op": "*"
+      }
+    ],
+    "expected": 7457
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3268,
+        "op": null
+      },
+      {
+        "value": 2,
+        "op": "+"
+      },
+      {
+        "value": 11,
+        "op": "*"
+      }
+    ],
+    "expected": 3290
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5955,
+        "op": null
+      },
+      {
+        "value": 96,
+        "op": "/"
+      },
+      {
+        "value": 12,
+        "op": "*"
+      }
+    ],
+    "expected": 744.375
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 374,
+        "op": null
+      },
+      {
+        "value": 7,
+        "op": "*"
+      },
+      {
+        "value": 18,
+        "op": "*"
+      }
+    ],
+    "expected": 47124
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4925,
+        "op": null
+      },
+      {
+        "value": 84,
+        "op": "-"
+      },
+      {
+        "value": 14,
+        "op": "*"
+      }
+    ],
+    "expected": 3749
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8024,
+        "op": null
+      },
+      {
+        "value": 93,
+        "op": "+"
+      },
+      {
+        "value": 91,
+        "op": "*"
+      }
+    ],
+    "expected": 16487
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3559,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "/"
+      },
+      {
+        "value": 38,
+        "op": "*"
+      }
+    ],
+    "expected": 1988.8529411764705
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8682,
+        "op": null
+      },
+      {
+        "value": 17,
+        "op": "*"
+      },
+      {
+        "value": 13,
+        "op": "*"
+      }
+    ],
+    "expected": 1918722
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9441,
+        "op": null
+      },
+      {
+        "value": 73,
+        "op": "-"
+      },
+      {
+        "value": 79,
+        "op": "*"
+      }
+    ],
+    "expected": 3674
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3132,
+        "op": null
+      },
+      {
+        "value": 56,
+        "op": "+"
+      },
+      {
+        "value": 87,
+        "op": "*"
+      }
+    ],
+    "expected": 8004
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3547,
+        "op": null
+      },
+      {
+        "value": 60,
+        "op": "/"
+      },
+      {
+        "value": 91,
+        "op": "*"
+      }
+    ],
+    "expected": 5379.616666666667
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7198,
+        "op": null
+      },
+      {
+        "value": 27,
+        "op": "*"
+      },
+      {
+        "value": 58,
+        "op": "*"
+      }
+    ],
+    "expected": 11272068
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9413,
+        "op": null
+      },
+      {
+        "value": 45,
+        "op": "-"
+      },
+      {
+        "value": 13,
+        "op": "*"
+      }
+    ],
+    "expected": 8828
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4736,
+        "op": null
+      },
+      {
+        "value": 17,
+        "op": "+"
+      },
+      {
+        "value": 12,
+        "op": "*"
+      }
+    ],
+    "expected": 4940
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6511,
+        "op": null
+      },
+      {
+        "value": 4,
+        "op": "/"
+      },
+      {
+        "value": 50,
+        "op": "*"
+      }
+    ],
+    "expected": 81387.5
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3634,
+        "op": null
+      },
+      {
+        "value": 88,
+        "op": "*"
+      },
+      {
+        "value": 31,
+        "op": "*"
+      }
+    ],
+    "expected": 9913552
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7897,
+        "op": null
+      },
+      {
+        "value": 75,
+        "op": "-"
+      },
+      {
+        "value": 34,
+        "op": "*"
+      }
+    ],
+    "expected": 5347
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 996,
+        "op": null
+      },
+      {
+        "value": 36,
+        "op": "+"
+      },
+      {
+        "value": 14,
+        "op": "*"
+      }
+    ],
+    "expected": 1500
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7587,
+        "op": null
+      },
+      {
+        "value": 57,
+        "op": "/"
+      },
+      {
+        "value": 54,
+        "op": "*"
+      }
+    ],
+    "expected": 7187.684210526316
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4646,
+        "op": null
+      },
+      {
+        "value": 76,
+        "op": "*"
+      },
+      {
+        "value": 45,
+        "op": "*"
+      }
+    ],
+    "expected": 15889320
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8221,
+        "op": null
+      },
+      {
+        "value": 51,
+        "op": "-"
+      },
+      {
+        "value": 20,
+        "op": "*"
+      }
+    ],
+    "expected": 7201
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 424,
+        "op": null
+      },
+      {
+        "value": 63,
+        "op": "+"
+      },
+      {
+        "value": 57,
+        "op": "*"
+      }
+    ],
+    "expected": 4015
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1159,
+        "op": null
+      },
+      {
+        "value": 82,
+        "op": "/"
+      },
+      {
+        "value": 66,
+        "op": "*"
+      }
+    ],
+    "expected": 932.8536585365854
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6202,
+        "op": null
+      },
+      {
+        "value": 20,
+        "op": "*"
+      },
+      {
+        "value": 39,
+        "op": "*"
+      }
+    ],
+    "expected": 4837560
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5889,
+        "op": null
+      },
+      {
+        "value": 58,
+        "op": "-"
+      },
+      {
+        "value": 69,
+        "op": "*"
+      }
+    ],
+    "expected": 1887
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4940,
+        "op": null
+      },
+      {
+        "value": 20,
+        "op": "+"
+      },
+      {
+        "value": 13,
+        "op": "*"
+      }
+    ],
+    "expected": 5200
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5019,
+        "op": null
+      },
+      {
+        "value": 11,
+        "op": "/"
+      },
+      {
+        "value": 34,
+        "op": "*"
+      }
+    ],
+    "expected": 15513.272727272726
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4254,
+        "op": null
+      },
+      {
+        "value": 11,
+        "op": "*"
+      },
+      {
+        "value": 23,
+        "op": "*"
+      }
+    ],
+    "expected": 1076262
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1909,
+        "op": null
+      },
+      {
+        "value": 63,
+        "op": "-"
+      },
+      {
+        "value": 50,
+        "op": "*"
+      }
+    ],
+    "expected": -1241
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8672,
+        "op": null
+      },
+      {
+        "value": 94,
+        "op": "+"
+      },
+      {
+        "value": 62,
+        "op": "*"
+      }
+    ],
+    "expected": 14500
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7535,
+        "op": null
+      },
+      {
+        "value": 72,
+        "op": "/"
+      },
+      {
+        "value": 77,
+        "op": "*"
+      }
+    ],
+    "expected": 8058.263888888889
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9842,
+        "op": null
+      },
+      {
+        "value": 89,
+        "op": "*"
+      },
+      {
+        "value": 50,
+        "op": "*"
+      }
+    ],
+    "expected": 43796900
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3209,
+        "op": null
+      },
+      {
+        "value": 54,
+        "op": "-"
+      },
+      {
+        "value": 58,
+        "op": "*"
+      }
+    ],
+    "expected": 77
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4836,
+        "op": null
+      },
+      {
+        "value": 21,
+        "op": "+"
+      },
+      {
+        "value": 76,
+        "op": "*"
+      }
+    ],
+    "expected": 6432
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7539,
+        "op": null
+      },
+      {
+        "value": 38,
+        "op": "/"
+      },
+      {
+        "value": 95,
+        "op": "*"
+      }
+    ],
+    "expected": 18847.5
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6166,
+        "op": null
+      },
+      {
+        "value": 54,
+        "op": "*"
+      },
+      {
+        "value": 61,
+        "op": "*"
+      }
+    ],
+    "expected": 20310804
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8749,
+        "op": null
+      },
+      {
+        "value": 91,
+        "op": "-"
+      },
+      {
+        "value": 7,
+        "op": "*"
+      }
+    ],
+    "expected": 8112
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3224,
+        "op": null
+      },
+      {
+        "value": 33,
+        "op": "+"
+      },
+      {
+        "value": 22,
+        "op": "*"
+      }
+    ],
+    "expected": 3950
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8471,
+        "op": null
+      },
+      {
+        "value": 48,
+        "op": "/"
+      },
+      {
+        "value": 72,
+        "op": "*"
+      }
+    ],
+    "expected": 12706.5
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2186,
+        "op": null
+      },
+      {
+        "value": 67,
+        "op": "*"
+      },
+      {
+        "value": 91,
+        "op": "*"
+      }
+    ],
+    "expected": 13328042
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3905,
+        "op": null
+      },
+      {
+        "value": 70,
+        "op": "-"
+      },
+      {
+        "value": 73,
+        "op": "*"
+      }
+    ],
+    "expected": -1205
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5356,
+        "op": null
+      },
+      {
+        "value": 51,
+        "op": "+"
+      },
+      {
+        "value": 96,
+        "op": "*"
+      }
+    ],
+    "expected": 10252
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9323,
+        "op": null
+      },
+      {
+        "value": 34,
+        "op": "/"
+      },
+      {
+        "value": 80,
+        "op": "*"
+      }
+    ],
+    "expected": 21936.470588235294
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3934,
+        "op": null
+      },
+      {
+        "value": 99,
+        "op": "*"
+      },
+      {
+        "value": 56,
+        "op": "*"
+      }
+    ],
+    "expected": 21810096
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9413,
+        "op": null
+      },
+      {
+        "value": 48,
+        "op": "-"
+      },
+      {
+        "value": 97,
+        "op": "*"
+      }
+    ],
+    "expected": 4757
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1584,
+        "op": null
+      },
+      {
+        "value": 66,
+        "op": "+"
+      },
+      {
+        "value": 90,
+        "op": "*"
+      }
+    ],
+    "expected": 7524
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1343,
+        "op": null
+      },
+      {
+        "value": 4,
+        "op": "/"
+      },
+      {
+        "value": 45,
+        "op": "*"
+      }
+    ],
+    "expected": 15108.75
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5778,
+        "op": null
+      },
+      {
+        "value": 78,
+        "op": "*"
+      },
+      {
+        "value": 81,
+        "op": "*"
+      }
+    ],
+    "expected": 36505404
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 585,
+        "op": null
+      },
+      {
+        "value": 76,
+        "op": "-"
+      },
+      {
+        "value": 44,
+        "op": "*"
+      }
+    ],
+    "expected": -2759
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2740,
+        "op": null
+      },
+      {
+        "value": 50,
+        "op": "+"
+      },
+      {
+        "value": 55,
+        "op": "*"
+      }
+    ],
+    "expected": 5490
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3731,
+        "op": null
+      },
+      {
+        "value": 59,
+        "op": "/"
+      },
+      {
+        "value": 79,
+        "op": "*"
+      }
+    ],
+    "expected": 4995.745762711864
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8918,
+        "op": null
+      },
+      {
+        "value": 4,
+        "op": "*"
+      },
+      {
+        "value": 34,
+        "op": "*"
+      }
+    ],
+    "expected": 1212848
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2653,
+        "op": null
+      },
+      {
+        "value": 26,
+        "op": "-"
+      },
+      {
+        "value": 4,
+        "op": "*"
+      }
+    ],
+    "expected": 2549
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1304,
+        "op": null
+      },
+      {
+        "value": 84,
+        "op": "+"
+      },
+      {
+        "value": 90,
+        "op": "*"
+      }
+    ],
+    "expected": 8864
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6343,
+        "op": null
+      },
+      {
+        "value": 74,
+        "op": "/"
+      },
+      {
+        "value": 47,
+        "op": "*"
+      }
+    ],
+    "expected": 4028.662162162162
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8410,
+        "op": null
+      },
+      {
+        "value": 54,
+        "op": "*"
+      },
+      {
+        "value": 9,
+        "op": "*"
+      }
+    ],
+    "expected": 4087260
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8641,
+        "op": null
+      },
+      {
+        "value": 3,
+        "op": "-"
+      },
+      {
+        "value": 47,
+        "op": "*"
+      }
+    ],
+    "expected": 8500
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7772,
+        "op": null
+      },
+      {
+        "value": 82,
+        "op": "+"
+      },
+      {
+        "value": 35,
+        "op": "*"
+      }
+    ],
+    "expected": 10642
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3835,
+        "op": null
+      },
+      {
+        "value": 25,
+        "op": "/"
+      },
+      {
+        "value": 71,
+        "op": "*"
+      }
+    ],
+    "expected": 10891.4
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9646,
+        "op": null
+      },
+      {
+        "value": 58,
+        "op": "*"
+      },
+      {
+        "value": 9,
+        "op": "*"
+      }
+    ],
+    "expected": 5035212
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5493,
+        "op": null
+      },
+      {
+        "value": 30,
+        "op": "-"
+      },
+      {
+        "value": 66,
+        "op": "*"
+      }
+    ],
+    "expected": 3513
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3296,
+        "op": null
+      },
+      {
+        "value": 38,
+        "op": "+"
+      },
+      {
+        "value": 5,
+        "op": "*"
+      }
+    ],
+    "expected": 3486
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4543,
+        "op": null
+      },
+      {
+        "value": 68,
+        "op": "/"
+      },
+      {
+        "value": 7,
+        "op": "*"
+      }
+    ],
+    "expected": 467.6617647058824
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 5714,
+        "op": null
+      },
+      {
+        "value": 67,
+        "op": "*"
+      },
+      {
+        "value": 2,
+        "op": "*"
+      }
+    ],
+    "expected": 765676
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3353,
+        "op": null
+      },
+      {
+        "value": 31,
+        "op": "-"
+      },
+      {
+        "value": 64,
+        "op": "*"
+      }
+    ],
+    "expected": 1369
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 628,
+        "op": null
+      },
+      {
+        "value": 44,
+        "op": "+"
+      },
+      {
+        "value": 95,
+        "op": "*"
+      }
+    ],
+    "expected": 4808
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1923,
+        "op": null
+      },
+      {
+        "value": 80,
+        "op": "/"
+      },
+      {
+        "value": 91,
+        "op": "*"
+      }
+    ],
+    "expected": 2187.4125
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9142,
+        "op": null
+      },
+      {
+        "value": 66,
+        "op": "*"
+      },
+      {
+        "value": 30,
+        "op": "*"
+      }
+    ],
+    "expected": 18101160
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9821,
+        "op": null
+      },
+      {
+        "value": 6,
+        "op": "-"
+      },
+      {
+        "value": 44,
+        "op": "*"
+      }
+    ],
+    "expected": 9557
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1864,
+        "op": null
+      },
+      {
+        "value": 14,
+        "op": "+"
+      },
+      {
+        "value": 88,
+        "op": "*"
+      }
+    ],
+    "expected": 3096
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7895,
+        "op": null
+      },
+      {
+        "value": 80,
+        "op": "/"
+      },
+      {
+        "value": 37,
+        "op": "*"
+      }
+    ],
+    "expected": 3651.4375
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1466,
+        "op": null
+      },
+      {
+        "value": 12,
+        "op": "*"
+      },
+      {
+        "value": 92,
+        "op": "*"
+      }
+    ],
+    "expected": 1618464
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2321,
+        "op": null
+      },
+      {
+        "value": 60,
+        "op": "-"
+      },
+      {
+        "value": 100,
+        "op": "*"
+      }
+    ],
+    "expected": -3679
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4892,
+        "op": null
+      },
+      {
+        "value": 98,
+        "op": "+"
+      },
+      {
+        "value": 18,
+        "op": "*"
+      }
+    ],
+    "expected": 6656
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9867,
+        "op": null
+      },
+      {
+        "value": 36,
+        "op": "/"
+      },
+      {
+        "value": 22,
+        "op": "*"
+      }
+    ],
+    "expected": 6029.833333333333
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 6702,
+        "op": null
+      },
+      {
+        "value": 42,
+        "op": "*"
+      },
+      {
+        "value": 99,
+        "op": "*"
+      }
+    ],
+    "expected": 27866916
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4309,
+        "op": null
+      },
+      {
+        "value": 67,
+        "op": "-"
+      },
+      {
+        "value": 43,
+        "op": "*"
+      }
+    ],
+    "expected": 1428
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7168,
+        "op": null
+      },
+      {
+        "value": 71,
+        "op": "+"
+      },
+      {
+        "value": 90,
+        "op": "*"
+      }
+    ],
+    "expected": 13558
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4687,
+        "op": null
+      },
+      {
+        "value": 56,
+        "op": "/"
+      },
+      {
+        "value": 21,
+        "op": "*"
+      }
+    ],
+    "expected": 1757.625
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 146,
+        "op": null
+      },
+      {
+        "value": 71,
+        "op": "*"
+      },
+      {
+        "value": 74,
+        "op": "*"
+      }
+    ],
+    "expected": 767084
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4297,
+        "op": null
+      },
+      {
+        "value": 81,
+        "op": "-"
+      },
+      {
+        "value": 89,
+        "op": "*"
+      }
+    ],
+    "expected": -2912
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 484,
+        "op": null
+      },
+      {
+        "value": 65,
+        "op": "+"
+      },
+      {
+        "value": 66,
+        "op": "*"
+      }
+    ],
+    "expected": 4774
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4131,
+        "op": null
+      },
+      {
+        "value": 37,
+        "op": "/"
+      },
+      {
+        "value": 14,
+        "op": "*"
+      }
+    ],
+    "expected": 1563.081081081081
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8150,
+        "op": null
+      },
+      {
+        "value": 92,
+        "op": "*"
+      },
+      {
+        "value": 66,
+        "op": "*"
+      }
+    ],
+    "expected": 49486800
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8397,
+        "op": null
+      },
+      {
+        "value": 54,
+        "op": "-"
+      },
+      {
+        "value": 57,
+        "op": "*"
+      }
+    ],
+    "expected": 5319
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3336,
+        "op": null
+      },
+      {
+        "value": 96,
+        "op": "+"
+      },
+      {
+        "value": 51,
+        "op": "*"
+      }
+    ],
+    "expected": 8232
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3975,
+        "op": null
+      },
+      {
+        "value": 74,
+        "op": "/"
+      },
+      {
+        "value": 34,
+        "op": "*"
+      }
+    ],
+    "expected": 1826.3513513513515
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3690,
+        "op": null
+      },
+      {
+        "value": 99,
+        "op": "*"
+      },
+      {
+        "value": 40,
+        "op": "*"
+      }
+    ],
+    "expected": 14612400
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 7121,
+        "op": null
+      },
+      {
+        "value": 36,
+        "op": "-"
+      },
+      {
+        "value": 74,
+        "op": "*"
+      }
+    ],
+    "expected": 4457
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9532,
+        "op": null
+      },
+      {
+        "value": 33,
+        "op": "+"
+      },
+      {
+        "value": 26,
+        "op": "*"
+      }
+    ],
+    "expected": 10390
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4347,
+        "op": null
+      },
+      {
+        "value": 55,
+        "op": "/"
+      },
+      {
+        "value": 7,
+        "op": "*"
+      }
+    ],
+    "expected": 553.2545454545455
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 9470,
+        "op": null
+      },
+      {
+        "value": 78,
+        "op": "*"
+      },
+      {
+        "value": 39,
+        "op": "*"
+      }
+    ],
+    "expected": 28807740
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 533,
+        "op": null
+      },
+      {
+        "value": 73,
+        "op": "-"
+      },
+      {
+        "value": 5,
+        "op": "*"
+      }
+    ],
+    "expected": 168
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4672,
+        "op": null
+      },
+      {
+        "value": 75,
+        "op": "+"
+      },
+      {
+        "value": 24,
+        "op": "*"
+      }
+    ],
+    "expected": 6472
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 1135,
+        "op": null
+      },
+      {
+        "value": 28,
+        "op": "/"
+      },
+      {
+        "value": 71,
+        "op": "*"
+      }
+    ],
+    "expected": 2878.035714285714
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 4834,
+        "op": null
+      },
+      {
+        "value": 52,
+        "op": "*"
+      },
+      {
+        "value": 81,
+        "op": "*"
+      }
+    ],
+    "expected": 20360808
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 2873,
+        "op": null
+      },
+      {
+        "value": 4,
+        "op": "-"
+      },
+      {
+        "value": 38,
+        "op": "*"
+      }
+    ],
+    "expected": 2721
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 8452,
+        "op": null
+      },
+      {
+        "value": 38,
+        "op": "+"
+      },
+      {
+        "value": 96,
+        "op": "*"
+      }
+    ],
+    "expected": 12100
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3827,
+        "op": null
+      },
+      {
+        "value": 42,
+        "op": "/"
+      },
+      {
+        "value": 22,
+        "op": "*"
+      }
+    ],
+    "expected": 2004.6190476190477
+  },
+  {
+    "kind": "evaluate",
+    "input": [
+      {
+        "value": 3254,
+        "op": null
+      },
+      {
+        "value": 34,
+        "op": "*"
+      },
+      {
+        "value": 58,
+        "op": "*"
+      }
+    ],
+    "expected": 6416888
+  }
+]
