@@ -177,21 +177,108 @@ impl CalculatorApp {
         accent: bool,
         enabled: bool,
     ) {
-        let text = RichText::new(label).size((size.y * 0.4).clamp(15.0, 27.0));
-        let mut button = egui::Button::new(if accent {
-            text.color(self.theme.accent())
+        let danger = match self.theme {
+            Theme::Original => Color32::from_rgb(210, 91, 80),
+            Theme::Light => Color32::from_rgb(174, 49, 39),
+            Theme::Dark => Color32::from_rgb(238, 142, 133),
+        };
+        let danger_fill = match self.theme {
+            Theme::Original => Color32::from_rgb(58, 32, 29),
+            Theme::Light => Color32::from_rgb(248, 221, 216),
+            Theme::Dark => Color32::from_rgb(73, 43, 47),
+        };
+        let operator_fill = match self.theme {
+            Theme::Original => Color32::from_rgb(58, 44, 24),
+            Theme::Light => Color32::from_rgb(247, 231, 208),
+            Theme::Dark => Color32::from_rgb(28, 57, 73),
+        };
+        let success = match self.theme {
+            Theme::Original => Color32::from_rgb(79, 157, 97),
+            Theme::Light => Color32::from_rgb(46, 125, 65),
+            Theme::Dark => Color32::from_rgb(90, 166, 106),
+        };
+        let base = if accent {
+            self.theme.accent()
+        } else {
+            ui.visuals().text_color()
+        };
+        let (foreground, background) = match action {
+            Action::Clear => (danger, Some(danger_fill)),
+            Action::ClearEntry => (danger, None),
+            Action::Backspace => (ui.visuals().weak_text_color(), None),
+            Action::Operator(op) if self.calculator.state().pending == Some(op) => {
+                (Color32::BLACK, Some(self.theme.accent()))
+            }
+            Action::Operator(_) => (self.theme.accent(), Some(operator_fill)),
+            Action::Equals => (
+                if self.theme == Theme::Light {
+                    Color32::WHITE
+                } else {
+                    Color32::from_rgb(12, 26, 15)
+                },
+                Some(success),
+            ),
+            _ => (base, None),
+        };
+        let text = RichText::new(if matches!(action, Action::Backspace) {
+            ""
+        } else {
+            label
+        })
+        .size((size.y * 0.4).clamp(15.0, 27.0))
+        .color(foreground);
+        let text = if matches!(
+            action,
+            Action::Clear | Action::ClearEntry | Action::Operator(_)
+        ) {
+            text.strong()
         } else {
             text
-        })
-        .corner_radius(12.0);
-        if label == "=" {
-            button = egui::Button::new(RichText::new("=").size(27.0).color(Color32::BLACK))
-                .fill(self.theme.accent())
-                .corner_radius(12.0);
+        };
+        let mut button = egui::Button::new(text).corner_radius(12.0);
+        if let Some(background) = background {
+            button = button.fill(background);
         }
         let response = ui
             .add_enabled_ui(enabled, |ui| ui.add_sized(size, button))
             .inner;
+        if matches!(action, Action::Backspace) {
+            response.widget_info(|| {
+                egui::WidgetInfo::labeled(
+                    egui::WidgetType::Button,
+                    enabled,
+                    "Letzte Stelle löschen",
+                )
+            });
+            let center = response.rect.center();
+            let h = (size.y * 0.32).clamp(12.0, 24.0);
+            let w = h * 1.5;
+            let stroke = egui::Stroke::new(1.7_f32, foreground);
+            let points = vec![
+                egui::pos2(center.x - w * 0.5, center.y),
+                egui::pos2(center.x - w * 0.2, center.y - h * 0.5),
+                egui::pos2(center.x + w * 0.5, center.y - h * 0.5),
+                egui::pos2(center.x + w * 0.5, center.y + h * 0.5),
+                egui::pos2(center.x - w * 0.2, center.y + h * 0.5),
+            ];
+            ui.painter().add(egui::Shape::closed_line(points, stroke));
+            let x = center.x + w * 0.12;
+            let d = h * 0.2;
+            ui.painter().line_segment(
+                [
+                    egui::pos2(x - d, center.y - d),
+                    egui::pos2(x + d, center.y + d),
+                ],
+                stroke,
+            );
+            ui.painter().line_segment(
+                [
+                    egui::pos2(x - d, center.y + d),
+                    egui::pos2(x + d, center.y - d),
+                ],
+                stroke,
+            );
+        }
         if enabled {
             self.targets.push(touch::Target {
                 rect: response.rect,
@@ -215,7 +302,7 @@ impl CalculatorApp {
             [
                 ("AC", Action::Clear),
                 ("C", Action::ClearEntry),
-                ("DEL", Action::Backspace),
+                ("⌫", Action::Backspace),
                 ("÷", Action::Operator('/')),
             ],
             [
