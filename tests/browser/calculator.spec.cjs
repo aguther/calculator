@@ -39,7 +39,7 @@ for(const viewport of [{width:320,height:568},{width:400,height:760}]){
 
 test('theme selection persists and blocks calculator keyboard while settings are open',async({page})=>{
  await page.setViewportSize({width:400,height:760});await ready(page);await page.keyboard.press('F1');
- await page.waitForTimeout(100);await page.mouse.click(290,293);
+ await page.waitForTimeout(100);await page.mouse.click(290,197);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').theme)).toBe('Light');
  await page.keyboard.type('123');await expect(page.locator('#calculator-status')).toContainText('0:00');
  await page.keyboard.press('Escape');await page.reload();await expect(page.locator('#loading')).toHaveCount(0);
@@ -123,10 +123,17 @@ test('safe-area insets and update banner leave the full canvas visible',async({p
 
 test('settings switches toggle and persist',async({page})=>{
  await page.setViewportSize({width:400,height:760});await ready(page);await page.keyboard.press('F1');await page.waitForTimeout(100);
- await page.mouse.click(339,411);
+ await page.mouse.click(339,315);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(false);
- await page.mouse.click(339,411);
+ await page.mouse.click(339,315);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(true);
  await page.keyboard.press('Escape');await page.reload();await expect(page.locator('#loading')).toHaveCount(0);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(true);
+});
+
+test('settings done button remains clickable after scrolling',async({page})=>{
+ await page.setViewportSize({width:400,height:760});await ready(page);await page.keyboard.press('F1');await page.waitForTimeout(100);
+ await page.mouse.move(200,350);await page.mouse.wheel(0,500);await page.waitForTimeout(100);
+ await page.mouse.click(200,666);await page.locator('canvas').focus();await page.keyboard.type('25+36=');
+ await expect(page.locator('#calculator-status')).toContainText('1:01');
 });

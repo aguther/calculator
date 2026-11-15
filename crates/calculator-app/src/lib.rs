@@ -1049,16 +1049,17 @@ impl CalculatorApp {
         egui::Window::new("Informationen und Einstellungen")
             .open(&mut open).title_bar(false).collapsible(false).resizable(false)
             .anchor(egui::Align2::CENTER_CENTER,Vec2::ZERO)
-            .default_width(width)
+            .fixed_size(Vec2::new(width,(ctx.content_rect().height()-140.0).max(160.0)))
             .max_width(width)
             .max_height((ctx.content_rect().height()-100.0).max(160.0))
-            .vscroll(true)
+            .vscroll(false)
             .frame(egui::Frame::new().fill(self.theme.panel()).inner_margin(18.0).corner_radius(20.0))
             .show(ctx,|ui|{
                 ui.spacing_mut().item_spacing=Vec2::splat(12.0);
                 ui.label(RichText::new("Einstellungen").font(bold_font(23.0)));
                 ui.label(RichText::new(format!("Calculator {VERSION} · {}",COMMIT.chars().take(12).collect::<String>())).small().weak());
                 ui.add_space(4.0);
+                egui::ScrollArea::vertical().id_salt("settings-content").max_height((ui.available_height()-80.0).max(32.0)).auto_shrink([false,false]).show(ui,|ui|{
                 ui.label(RichText::new("Darstellung").font(bold_font(15.0)));
                 ui.horizontal_wrapped(|ui|{
                     let width=((ui.available_width()-12.0)/2.0).max(96.0);
@@ -1082,6 +1083,8 @@ impl CalculatorApp {
                     if ui.button("Diagnose kopieren").clicked(){ctx.copy_text(text);}
                 });
                 ui.label(RichText::new("Berechnungen und Einstellungen bleiben auf diesem Gerät.").small().weak());
+                });
+                ui.separator();
                 if ui.add_sized([ui.available_width(),42.0],egui::Button::new(RichText::new("Fertig").font(bold_font(15.0))).fill(self.theme.surface()).corner_radius(12.0)).clicked(){self.settings_open=false;}
             });
         if !open {
@@ -1619,5 +1622,72 @@ mod history_alignment_tests {
         assert!(restored.history_right);
         let restored: CalculatorApp = serde_json::from_str(r#"{"history_right":false}"#).unwrap();
         assert!(!restored.history_right);
+    }
+}
+
+#[cfg(test)]
+mod settings_footer_tests {
+    use super::*;
+    #[test]
+    fn done_button_stays_visible_while_settings_scroll() {
+        for height in [400.0, 568.0, 760.0] {
+            let ctx = egui::Context::default();
+            configure_fonts(&ctx);
+            let mut app = CalculatorApp {
+                settings_open: true,
+                ..Default::default()
+            };
+            let mut previous: Option<f32> = None;
+            for frame in 0..6 {
+                let events = if frame >= 3 {
+                    vec![
+                        egui::Event::PointerMoved(egui::pos2(200.0, height * 0.5)),
+                        egui::Event::MouseWheel {
+                            unit: egui::MouseWheelUnit::Point,
+                            delta: Vec2::new(0.0, -200.0),
+                            modifiers: egui::Modifiers::default(),
+                        },
+                    ]
+                } else {
+                    Vec::new()
+                };
+                let output = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            Vec2::new(400.0, height),
+                        )),
+                        events,
+                        ..Default::default()
+                    },
+                    |ctx| app.settings(ctx),
+                );
+                if frame >= 2 {
+                    let rect = output
+                        .shapes
+                        .iter()
+                        .find_map(|clipped| {
+                            if let egui::Shape::Text(text) = &clipped.shape {
+                                if text.galley.text() == "Fertig" {
+                                    let rect = text.galley.rect.translate(text.pos.to_vec2());
+                                    assert!(clipped.clip_rect.contains_rect(rect));
+                                    return Some(rect);
+                                };
+                                None
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or_else(|| {
+                            panic!("Done button missing at {height}, frame {frame}")
+                        });
+                    assert!(rect.bottom() <= height);
+                    if let Some(y) = previous {
+                        assert!((rect.top() - y).abs() < 1.0, "Footer moved while scrolling");
+                    }
+                    previous = Some(rect.top());
+                }
+            }
+        }
     }
 }
