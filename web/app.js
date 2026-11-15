@@ -7,7 +7,7 @@ function syncViewport() {
   root.style.setProperty('--viewport-height', `${height}px`);
   root.style.setProperty('--viewport-top', `${top}px`);
   const style = window.getComputedStyle?.(root);
-  root.setAttribute('data-viewport', JSON.stringify({innerHeight:window.innerHeight,visibleHeight:viewport?.height,offsetTop:top,dpr:window.devicePixelRatio,safeTop:style?.getPropertyValue('--safe-top'),safeBottom:style?.getPropertyValue('--safe-bottom'),standalone:!!navigator.standalone}));
+  root.setAttribute('data-viewport', JSON.stringify({innerHeight:window.innerHeight,screenWidth:window.screen?.width,screenHeight:window.screen?.height,clientHeight:root.clientHeight,viewportScale:viewport?.scale,visibleHeight:viewport?.height,offsetTop:top,dpr:window.devicePixelRatio,safeTop:style?.getPropertyValue('--safe-top'),safeBottom:style?.getPropertyValue('--safe-bottom'),standalone:!!navigator.standalone}));
 }
 syncViewport();
 window.addEventListener('resize', syncViewport);
