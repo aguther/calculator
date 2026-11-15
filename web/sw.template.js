@@ -27,9 +27,12 @@ self.addEventListener('fetch', event => {
   if(event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const cached = await cache.match(event.request, {ignoreSearch:event.request.mode === 'navigate'});
-    if(cached) return cached;
-    if(event.request.mode === 'navigate') return await cache.match('/index.html') || fetch(event.request);
+    const cached = await cache.match(event.request, {ignoreSearch:event.request.mode === 'navigate'})
+      || (event.request.mode === 'navigate' ? await cache.match('/index.html') : undefined);
+    // Static hosts may redirect index.html; navigation cannot reuse a redirected response.
+    if(cached) return cached.redirected
+      ? new Response(cached.body, {status:cached.status, statusText:cached.statusText, headers:cached.headers})
+      : cached;
     return fetch(event.request);
   })());
 });
