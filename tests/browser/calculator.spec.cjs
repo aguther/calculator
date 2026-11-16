@@ -124,9 +124,9 @@ test('safe-area insets and update banner leave the full canvas visible',async({p
 
 test('settings switches toggle and persist',async({page})=>{
  await page.setViewportSize({width:400,height:760});await ready(page);await page.keyboard.press('F1');await page.waitForTimeout(100);
- await page.mouse.click(339,338);
+ await page.mouse.click(339,423);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(false);
- await page.mouse.click(339,338);
+ await page.mouse.click(339,423);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(true);
  await page.keyboard.press('Escape');await page.reload();await expect(page.locator('#loading')).toHaveCount(0);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(true);
@@ -211,4 +211,26 @@ test('a PWA launched offline discovers releases after reconnecting',async({page,
   await expect(page.locator('#update')).toBeVisible();
   await expect(page.locator('#calculator-status')).toContainText('0:45');
  } finally {await context.setOffline(false);await request.post('/__test/build-current');}
+});
+
+test.describe('language preferences',()=>{
+ test.use({locale:'en-US'});
+ test('locale selects English and an explicit German choice survives reload',async({page})=>{
+  await page.setViewportSize({width:400,height:760});await ready(page);
+  await expect(page.locator('html')).toHaveAttribute('lang','en');
+  await page.keyboard.type('25+36=');await expect(page.locator('#calculator-status')).toContainText('1:01');
+  await page.keyboard.press('F1');await page.waitForTimeout(100);await page.mouse.click(110,326);
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').language)).toBe('German');
+  await expect(page.locator('html')).toHaveAttribute('lang','de');
+  await page.reload();await expect(page.locator('#loading')).toHaveCount(0);
+  await expect(page.locator('html')).toHaveAttribute('lang','de');
+  await expect(page.locator('#calculator-status')).toContainText('1:01');
+ });
+ test('language changes localize calculation errors without resetting the calculation',async({page})=>{
+  await page.setViewportSize({width:400,height:760});await ready(page);
+  await page.keyboard.type('1/0=');await expect(page.locator('#calculator-status')).toContainText('Undefined');
+  await page.keyboard.press('F1');await page.waitForTimeout(100);await page.mouse.click(110,326);
+  await expect(page.locator('#calculator-status')).toContainText('Nicht definiert');
+  await expect(page.locator('#update')).toHaveAttribute('aria-label','Neue Version verfügbar · jetzt aktualisieren');
+ });
 });

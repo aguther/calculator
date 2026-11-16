@@ -1,6 +1,7 @@
 //! Settings navigation is transient; only preferences are persisted.
 use super::{
-    COMMIT, CalculatorApp, Theme, VERSION, bold_font, buttons::PressButton, settings_switch,
+    COMMIT, CalculatorApp, Language, Text, Theme, VERSION, bold_font, buttons::PressButton,
+    settings_switch,
 };
 use eframe::egui::{self, RichText, Vec2};
 
@@ -18,7 +19,8 @@ impl CalculatorApp {
         }
         let width = (ctx.content_rect().width() - 48.0).clamp(220.0, 360.0);
         let height = (ctx.content_rect().height() - 100.0).max(220.0);
-        egui::Window::new("Informationen und Einstellungen")
+        egui::Window::new(self.language.text(Text::InformationSettings))
+            .id(egui::Id::new("calculator-settings"))
             .title_bar(false)
             .collapsible(false)
             .resizable(false)
@@ -33,7 +35,7 @@ impl CalculatorApp {
             )
             .show(ctx, |ui| {
                 ui.spacing_mut().item_spacing = Vec2::splat(10.0);
-                ui.label(RichText::new("Einstellungen").font(bold_font(23.0)));
+                ui.label(RichText::new(self.language.text(Text::Settings)).font(bold_font(23.0)));
                 ui.label(
                     RichText::new(format!(
                         "Calculator {VERSION} · {}",
@@ -47,9 +49,12 @@ impl CalculatorApp {
                     ui.spacing_mut().item_spacing.x = 6.0;
                     let tab_width = (ui.available_width() - 12.0) / 3.0;
                     for (tab, label) in [
-                        (SettingsTab::General, "Allgemein"),
-                        (SettingsTab::Help, "Bedienung"),
-                        (SettingsTab::Diagnostics, "Diagnose"),
+                        (SettingsTab::General, self.language.text(Text::General)),
+                        (SettingsTab::Help, self.language.text(Text::Help)),
+                        (
+                            SettingsTab::Diagnostics,
+                            self.language.text(Text::Diagnostics),
+                        ),
                     ] {
                         let selected = self.settings_tab == tab;
                         if ui
@@ -92,7 +97,7 @@ impl CalculatorApp {
                         ui.set_max_width(content.width());
                         match self.settings_tab {
                             SettingsTab::General => self.general_settings(ui, ctx),
-                            SettingsTab::Help => Self::help_settings(ui),
+                            SettingsTab::Help => self.help_settings(ui),
                             SettingsTab::Diagnostics => self.diagnostic_settings(ui, ctx),
                         }
                     });
@@ -105,7 +110,7 @@ impl CalculatorApp {
                     .put(
                         footer,
                         PressButton::new(
-                            "Fertig",
+                            self.language.text(Text::Done),
                             footer.size(),
                             self.theme.surface(),
                             ui.visuals().text_color(),
@@ -120,7 +125,7 @@ impl CalculatorApp {
             });
     }
     fn general_settings(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        ui.label(RichText::new("Darstellung").font(bold_font(15.0)));
+        ui.label(RichText::new(self.language.text(Text::Appearance)).font(bold_font(15.0)));
         ui.horizontal(|ui| {
             let width = (ui.available_width() - ui.spacing().item_spacing.x * 2.0) / 3.0;
             for &theme in Theme::ALL {
@@ -128,7 +133,7 @@ impl CalculatorApp {
                 if ui
                     .add(
                         PressButton::new(
-                            theme.label(),
+                            theme.label(self.language),
                             Vec2::new(width, 44.0),
                             self.theme.surface(),
                             if selected {
@@ -148,7 +153,28 @@ impl CalculatorApp {
             }
         });
         ui.add_space(8.0);
-        ui.label(RichText::new("Verhalten").font(bold_font(15.0)));
+        ui.label(RichText::new(self.language.text(Text::Language)).font(bold_font(15.0)));
+        ui.horizontal(|ui| {
+            let width = (ui.available_width() - ui.spacing().item_spacing.x) / 2.0;
+            for language in [Language::German, Language::English] {
+                if ui
+                    .add(
+                        PressButton::new(
+                            language.name(),
+                            Vec2::new(width, 44.0),
+                            self.theme.surface(),
+                            ui.visuals().text_color(),
+                        )
+                        .selected(self.language == language),
+                    )
+                    .clicked()
+                {
+                    self.set_language(language, ctx);
+                }
+            }
+        });
+        ui.add_space(8.0);
+        ui.label(RichText::new(self.language.text(Text::Behavior)).font(bold_font(15.0)));
         egui::Frame::new()
             .fill(self.theme.surface())
             .inner_margin(12.0)
@@ -157,47 +183,57 @@ impl CalculatorApp {
                 if settings_switch(
                     ui,
                     &mut self.history_right,
-                    "Verlauf rechts im Querformat",
+                    self.language.text(Text::HistoryRight),
                     true,
                 ) {
                     self.dirty = true;
                 }
                 ui.separator();
-                if settings_switch(ui, &mut self.sound, "Tastenklicks", true) {
+                if settings_switch(ui, &mut self.sound, self.language.text(Text::Clicks), true) {
                     self.dirty = true;
                 }
                 ui.separator();
                 if settings_switch(
                     ui,
                     &mut self.haptics,
-                    "Haptik",
+                    self.language.text(Text::Haptics),
                     crate::feedback::supports_haptics(),
                 ) {
                     self.dirty = true;
                 }
                 if !crate::feedback::supports_haptics() {
                     ui.label(
-                        RichText::new("Vibration wird auf diesem Gerät nicht unterstützt.")
+                        RichText::new(self.language.text(Text::NoVibration))
                             .small()
                             .weak(),
                     );
                 }
             });
     }
-    fn help_settings(ui: &mut egui::Ui) {
-        ui.label(RichText::new("Hilfreiche Tastenkürzel").font(bold_font(15.0)));
+    fn help_settings(&self, ui: &mut egui::Ui) {
+        ui.label(RichText::new(self.language.text(Text::Shortcuts)).font(bold_font(15.0)));
         for (label, key) in [
-            ("Einstellungen öffnen / schließen", "F1"),
-            ("Zum Zeitrechner wechseln", "F2"),
-            ("Zum Zahlenrechner wechseln", "F3"),
-            ("Letzte Stelle löschen", "Rücktaste"),
-            ("Eingabe löschen", "Entf"),
-            ("Alles zurücksetzen", "Esc"),
+            (self.language.text(Text::ToggleSettings), "F1"),
+            (self.language.text(Text::TimeShortcut), "F2"),
+            (self.language.text(Text::NumberShortcut), "F3"),
+            (
+                self.language.text(Text::Backspace),
+                self.language.text(Text::BackspaceKey),
+            ),
+            (
+                self.language.text(Text::ClearEntry),
+                self.language.text(Text::DeleteKey),
+            ),
+            (self.language.text(Text::Clear), "Esc"),
         ] {
             Self::settings_row(ui, label, key);
         }
         ui.add_space(6.0);
-        ui.label(RichText::new("In den Einstellungen schließt Esc das Fenster. F2 und F3 funktionieren im Rechner.").small().weak());
+        ui.label(
+            RichText::new(self.language.text(Text::ShortcutHelp))
+                .small()
+                .weak(),
+        );
     }
     fn settings_row(ui: &mut egui::Ui, label: &str, value: &str) {
         ui.horizontal(|ui| {
@@ -232,21 +268,25 @@ impl CalculatorApp {
                 serde_json::Value::Null
             }
         };
-        ui.label(RichText::new("App und Gerät").font(bold_font(15.0)));
-        Self::settings_row(ui, "Version", VERSION);
+        ui.label(RichText::new(self.language.text(Text::AppDevice)).font(bold_font(15.0)));
+        Self::settings_row(ui, self.language.text(Text::Version), VERSION);
         Self::settings_row(
             ui,
-            "Bildschirm",
+            self.language.text(Text::Screen),
             &format!("{} × {}", size.x.round(), size.y.round()),
         );
         Self::settings_row(
             ui,
-            "Pixelskalierung",
+            self.language.text(Text::Scale),
             &format!("{}×", ctx.pixels_per_point()),
         );
-        Self::settings_row(ui, "Farbschema", self.theme.label());
+        Self::settings_row(
+            ui,
+            self.language.text(Text::Theme),
+            self.theme.label(self.language),
+        );
         ui.label(RichText::new(format!("Commit: {COMMIT}")).small().weak());
-        let text = serde_json::to_string_pretty(&serde_json::json!({"version":VERSION,"commit":COMMIT,"viewport":{"width":size.x,"height":size.y,"pixelsPerPoint":ctx.pixels_per_point()},"theme":self.theme,"browser":browser})).unwrap_or_default();
+        let text = serde_json::to_string_pretty(&serde_json::json!({"version":VERSION,"commit":COMMIT,"viewport":{"width":size.x,"height":size.y,"pixelsPerPoint":ctx.pixels_per_point()},"theme":self.theme,"language":self.language,"browser":browser})).unwrap_or_default();
         let copied = ui.id().with("diagnostics-copied");
         let now = ctx.input(|i| i.time);
         let recent = ctx
@@ -255,9 +295,9 @@ impl CalculatorApp {
         if ui
             .add(PressButton::new(
                 if recent {
-                    "Diagnose kopiert"
+                    self.language.text(Text::Copied)
                 } else {
-                    "Diagnose kopieren"
+                    self.language.text(Text::Copy)
                 },
                 Vec2::new(ui.available_width(), 44.0),
                 self.theme.surface(),
@@ -269,7 +309,11 @@ impl CalculatorApp {
             ctx.data_mut(|d| d.insert_temp(copied, now));
             ctx.request_repaint_after(std::time::Duration::from_secs(2));
         }
-        ui.label(RichText::new("Kopiert den vollständigen Bericht inklusive Browserinformationen für die Fehlersuche.").small().weak());
+        ui.label(
+            RichText::new(self.language.text(Text::CopyHelp))
+                .small()
+                .weak(),
+        );
     }
 }
 
@@ -293,6 +337,7 @@ mod tests {
                 let mut app = CalculatorApp {
                     settings_open: true,
                     settings_tab: tab,
+                    language: Language::German,
                     ..Default::default()
                 };
                 for _ in 0..3 {
@@ -384,11 +429,38 @@ mod interaction_tests {
         unreachable!()
     }
     #[test]
+    fn language_buttons_switch_visible_labels_and_persist_preferences() {
+        let ctx = egui::Context::default();
+        super::super::configure_fonts(&ctx);
+        let mut app = CalculatorApp {
+            settings_open: true,
+            language: Language::German,
+            ..Default::default()
+        };
+        for _ in 0..3 {
+            frame(&ctx, &mut app, vec![]);
+        }
+        let output = frame(&ctx, &mut app, vec![]);
+        click(&ctx, &mut app, center(&output, "English"));
+        let output = frame(&ctx, &mut app, vec![]);
+        center(&output, "Settings");
+        center(&output, "Done");
+        assert_eq!(app.language, Language::English);
+        assert!(app.dirty);
+        let restored = CalculatorApp::restore(Some(&serde_json::to_string(&app).unwrap()));
+        assert_eq!(restored.language, Language::English);
+        click(&ctx, &mut app, center(&output, "Deutsch"));
+        let output = frame(&ctx, &mut app, vec![]);
+        center(&output, "Einstellungen");
+        assert_eq!(app.language, Language::German);
+    }
+    #[test]
     fn tabs_show_shortcuts_and_copy_full_diagnostics_without_changing_preferences() {
         let ctx = egui::Context::default();
         super::super::configure_fonts(&ctx);
         let mut app = CalculatorApp {
             settings_open: true,
+            language: Language::German,
             ..Default::default()
         };
         let saved = serde_json::to_string(&app).unwrap();

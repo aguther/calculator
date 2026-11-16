@@ -1,7 +1,8 @@
+//! Native window startup and asynchronous browser canvas initialization.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result {
-    let icon = eframe::icon_data::from_png_bytes(include_bytes!("../../../web/icon-192.png"))
+    let icon = eframe::icon_data::from_png_bytes(include_bytes!("../../../web/icon-512.png"))
         .expect("embedded icon");
     eframe::run_native(
         "Calculator",
@@ -40,9 +41,15 @@ fn main() {
             if result.is_ok() {
                 el.remove();
             } else {
-                el.set_text_content(Some(
-                    "Calculator konnte nicht starten. Bitte WebGL aktivieren und neu laden.",
-                ));
+                let message = match calculator::Language::system() {
+                    calculator::Language::German => {
+                        "Calculator konnte nicht starten. Bitte WebGL aktivieren und neu laden."
+                    }
+                    calculator::Language::English => {
+                        "Calculator could not start. Enable WebGL and reload."
+                    }
+                };
+                el.set_text_content(Some(message));
             }
         }
     });

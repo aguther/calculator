@@ -1,77 +1,82 @@
-# Release-Verfahren
+# Release procedure
 
-## Einmalige Einrichtung
+## One-time setup
 
-1. App-Arbeitsbranch nach Review in `main` integrieren. `main` veröffentlicht nach erfolgreichen Prüfungen nur auf der Entwicklungsadresse.
-2. In GitHub unter Settings → Secrets and variables → Actions die Secrets
-   `CLOUDFLARE_API_TOKEN` und `CLOUDFLARE_ACCOUNT_ID` hinterlegen.
-   Das Token benötigt Zugriff zum Deployment von Workers/Static Assets im
-   vorgesehenen Konto. Werte nie in Dateien oder Workflow-Ausgaben schreiben.
-3. Kein automatisches Cloudflare-Git-Deployment einrichten. Falls `calculator`
-   bereits mit Git verbunden wird, dessen automatische Production-/Preview-Builds
-   deaktivieren. Der bestehende Worker `simple-calculator` bleibt unberührt.
-4. GitHub Actions erlauben; Release-Workflow erhält nur im Publish-Job Schreibrecht.
+1. Integrate reviewed app changes into `main`. After successful checks, `main`
+   publishes only to the development address.
+2. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` under GitHub Settings →
+   Secrets and variables → Actions. The token needs Workers/Static Assets
+   deployment access in the intended account. Never write values to files or logs.
+3. Do not configure automatic Cloudflare Git deployment. If `calculator` is already
+   Git-connected, disable its automatic production/preview builds. Keep the
+   existing `simple-calculator` Worker unchanged.
+4. Enable GitHub Actions. The release workflow grants write access only to its
+   publish job.
 
-## Eine Version freigeben
+## Publish a version
 
-Version in `[workspace.package]` erhöhen und Cargo.lock aktualisieren. Dazu die
-Änderungen für Nutzer in `docs/release-notes/VERSION.md` beschreiben: neue
-Funktionen, Korrekturen und gegebenenfalls Hinweise zum Update. Die Datei wird
-als GitHub-Release-Beschreibung verwendet; eine fehlende oder leere Beschreibung
-bricht die Freigabe ab. Bei einem wiederaufgenommenen Release wird die
-Beschreibung aus derselben Datei übernommen. Änderung
-prüfen und in `main` integrieren. Dann einen neuen, unveränderlichen Tag setzen:
+Update `[workspace.package]` and `Cargo.lock`. Describe user-visible features,
+fixes and any update instructions in `docs/release-notes/VERSION.md`. This file
+becomes the GitHub release description; a missing or empty description fails
+publication. Resumed releases use the same file. Review the change and integrate
+it into `main`, then create a new immutable tag:
 
 ```sh
 git checkout main
 git pull --ff-only
-git tag -a v0.1.0 -m "Calculator 0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.10 -m "Calculator 0.1.10"
+git push origin v0.1.10
 ```
 
-Der Workflow prüft Tag/Version und `main`-Abstammung. Alle Plattform-Builds und
-Tests müssen vor Veröffentlichung erfolgreich sein. Die Binärarchive und
-SHA256SUMS.txt werden zuerst in ein Draft-Release geladen, die exakt geprüfte
-PWA auf Cloudflare deployt, anschließend wird das Release veröffentlicht.
-Die Veröffentlichung ist global serialisiert; ältere Versionen dürfen eine
-bereits veröffentlichte oder durch einen Draft reservierte neuere Version nicht
-überschreiben. Damit bleibt der Schutz auch bei fehlgeschlagener Finalisierung
-nach einem erfolgreichen Cloudflare-Deployment erhalten.
+Use the actual new version, not an already published tag. The workflow checks the
+tag/version match and ancestry from `main`. Every platform build and test must
+pass before publication. It first uploads binary archives and `SHA256SUMS.txt`
+to a draft release, deploys the exact verified PWA to Cloudflare, then publishes
+the release.
+
+Publication is globally serialized. An older version cannot overwrite a newer
+published version or one reserved by a draft. This protects production even if
+finalization fails after a successful Cloudflare deployment.
 
 Downloads: `calculator-VERSION-windows-x64.zip`,
-`calculator-VERSION-linux-x64.tar.gz`, `SHA256SUMS.txt`.
-Windows enthält eine unsignierte einzelne EXE; Linux eine ausführbare Datei
-mit dokumentierten Systembibliotheken. Keine WebView oder Rust-Installation nötig.
-Die initiale Zielbasis für Linux ist Ubuntu 22.04 (glibc 2.35).
+`calculator-VERSION-linux-x64.tar.gz`, `SHA256SUMS.txt`. Windows contains one
+unsigned EXE; Linux contains an executable with documented system libraries.
+Neither requires WebView or Rust. The initial Linux baseline is Ubuntu 22.04
+(glibc 2.35).
 
-## Fehlgeschlagene Veröffentlichungen
+## Recover a failed publication
 
-In GitHub **Re-run failed jobs** verwenden. Damit werden bereits gebaute Artefakte
-weiterverwendet. Vorhandene Release-Dateien werden anhand SHA-256 verglichen;
-abweichende Bytes werden niemals automatisch ersetzt. Ein vollständiger Neubuild
-kann andere Archivbytes erzeugen und wird dann bewusst abgewiesen. Für korrigierten
-Quellcode eine neue Version und einen neuen Tag erstellen; keinen Tag verschieben.
+Use GitHub **Re-run failed jobs** to reuse existing build artifacts. Existing
+release files are compared by SHA-256; differing bytes are never automatically
+replaced. A full rebuild may produce different archive bytes and is deliberately
+rejected in that case. Corrected source requires a new version and tag; do not
+move an existing tag.
 
-Fehlt ein Cloudflare-Secret, bleibt das GitHub Release im Draft. Bei erfolgreichem
-Deployment und fehlgeschlagener Release-Finalisierung kann die Browser-Version
-bereits neuer sein; der erneute fehlgeschlagene Job vervollständigt die Freigabe.
-GitHub und Cloudflare können nicht atomar veröffentlicht werden.
+Missing Cloudflare secrets leave the GitHub release as a draft. If deployment
+succeeds but release finalization fails, the browser version may already be newer;
+rerun the failed job to complete publication. GitHub and Cloudflare publication
+cannot be atomic.
 
-## PWA-Updates
+## PWA updates
 
-Ein neuer Service Worker lädt die komplette Anwendung vor. Bei Fehlschlag wird
-sein Cache entfernt und die bisherige Version bleibt aktiv. Ein verfügbares Update
-wird per Schaltfläche angeboten. Nach Bestätigung wechseln die offenen Tabs durch
-Neuladen auf die neue Version. Persistierter Rechnerzustand bleibt erhalten.
+A new service worker preloads the complete app. If loading fails, its cache is
+removed and the previous version stays active. A button offers a ready update.
+After confirmation, open tabs reload into the new version. Persisted calculator
+state is retained. See [architecture](architecture.md) for lifecycle details.
 
-## Entwicklungsadresse für main
+## Development deployment from main
 
-Nach jedem Push auf `main` laufen die vollständigen Windows-, Linux- und Web-Prüfungen. Erst wenn alle erfolgreich sind, veröffentlicht CI das bereits geprüfte Web-Artefakt unter:
+Every push to `main` runs the full Windows, Linux and web checks. Only after all
+pass does CI publish the already verified web artifact to:
 
 https://calculator-dev.andreas-7f3.workers.dev
 
-Der Job verwendet ausschließlich `wrangler.dev.jsonc` und den Worker `calculator-dev`. Pull Requests und Release-Tags lösen dieses Deployment nicht aus. Ein inzwischen überholter Main-Build wird übersprungen. Nach dem Deployment wird der Build-Hash der Adresse mit dem geprüften Artefakt verglichen.
+The job uses only `wrangler.dev.jsonc` and the `calculator-dev` Worker. Pull
+requests and release tags do not trigger this deployment. Superseded main builds
+are skipped. After deployment, the served build hash is compared with the checked
+artifact.
 
-Die Entwicklungsadresse ist öffentlich. Sie hat aufgrund der eigenen Origin getrennte Berechnungen, Einstellungen und PWA-Caches. Produktion bleibt `calculator` und wird ausschließlich mit Versions-Tags aktualisiert. Der ursprüngliche Worker `simple-calculator` bleibt unberührt.
-
-Alle verwendeten GitHub-Actions laufen mit Node.js 24; auch die npm-Buildschritte verwenden Node.js 24.
+The development address is public. Its separate origin gives it independent
+calculations, settings and PWA caches. Production remains `calculator` and changes
+only through version tags. The original `simple-calculator` Worker stays unchanged.
+All GitHub Actions and npm build steps use Node.js 24.

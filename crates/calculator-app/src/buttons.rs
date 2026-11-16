@@ -1,6 +1,11 @@
 //! Flat buttons retain their hit area while a quick scale and contrast change marks a press.
 use eframe::egui::{self, Color32, FontId, Response, Sense, Ui, Vec2, Widget};
 
+/// Match the reference web UI without creating a raised face or changing hitboxes.
+const PRESSED_SCALE: f32 = 0.92;
+const RELEASE_DURATION_SECONDS: f64 = 0.06;
+
+/// A flat, keyboard-accessible button with short-lived visual press feedback.
 pub(super) struct PressButton<'a> {
     text: &'a str,
     size: Vec2,
@@ -80,7 +85,7 @@ impl Widget for PressButton<'_> {
             1.0
         } else {
             feedback.released_at.map_or(0.0, |at| {
-                let progress = ((now - at) / 0.06).clamp(0.0, 1.0) as f32;
+                let progress = ((now - at) / RELEASE_DURATION_SECONDS).clamp(0.0, 1.0) as f32;
                 (1.0 - progress).powi(2)
             })
         };
@@ -116,7 +121,7 @@ impl Widget for PressButton<'_> {
                 );
             }
             let mut font = self.font;
-            font.size *= 1.0 - 0.08 * amount;
+            font.size *= 1.0 - (1.0 - PRESSED_SCALE) * amount;
             let galley = ui
                 .painter()
                 .layout_no_wrap(self.text.to_owned(), font, self.color);
@@ -128,7 +133,7 @@ impl Widget for PressButton<'_> {
     }
 }
 pub(super) fn face_rect(rect: egui::Rect, amount: f32) -> egui::Rect {
-    rect.shrink2(rect.size() * (0.04 * amount))
+    rect.shrink2(rect.size() * ((1.0 - PRESSED_SCALE) * 0.5 * amount))
 }
 pub(super) fn face_center(ui: &Ui, response: &Response) -> egui::Pos2 {
     ui.ctx()

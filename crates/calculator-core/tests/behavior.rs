@@ -35,7 +35,7 @@ fn intermediate_sum() {
 #[test]
 fn division_error_and_recovery() {
     let mut c = run(Mode::Number, "1/0=");
-    assert_eq!(c.current_text(), "Nicht definiert");
+    assert_eq!(c.current_text(), "Undefined");
     c.apply(Action::Digit('7'));
     assert_eq!(c.current_text(), "7");
 }

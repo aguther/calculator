@@ -1,0 +1,2 @@
+# Required only when regenerating or checking the Windows icon asset.
+Pillow==13.0.0

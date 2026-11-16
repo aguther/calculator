@@ -1,20 +1,37 @@
-//! Shared desktop and browser UI.
+//! Shared native and WebAssembly presentation layer.
+//!
+//! [`CalculatorApp`] owns persisted preferences and a platform-independent core.
+//! Input is processed before rendering; transient touch/settings state is never
+//! serialized. Locale detection chooses the initial [`Language`], while saved
+//! preferences take precedence on later launches.
+#![warn(missing_docs)]
 use calculator_core::{Action, Calculator, Mode, Step, format_number};
 use eframe::egui::{self, Color32, Vec2};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+mod language;
+pub use language::Language;
+use language::Text;
 
+/// Application package version.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+/// Source revision embedded during the build.
 pub const COMMIT: &str = env!("CALCULATOR_COMMIT");
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+/// Available calculator color palettes.
 pub enum Theme {
     #[default]
+    /// Original high contrast charcoal palette.
     Original,
+    /// Light palette for bright environments.
     Light,
+    /// Blue dark palette.
     Dark,
 }
 impl Theme {
+    /// All palettes in settings display order.
     pub const ALL: &[Self] = &[Self::Original, Self::Light, Self::Dark];
+    /// Main surface color for the selected palette.
     pub fn background(self) -> Color32 {
         match self {
             Self::Original => Color32::from_rgb(12, 12, 14),
@@ -43,11 +60,11 @@ impl Theme {
             Self::Dark => Color32::from_rgb(103, 192, 233),
         }
     }
-    fn label(self) -> &'static str {
+    fn label(self, language: Language) -> &'static str {
         match self {
-            Self::Original => "Original",
-            Self::Light => "Hell",
-            Self::Dark => "Dunkel",
+            Self::Original => language.text(Text::Original),
+            Self::Light => language.text(Text::Light),
+            Self::Dark => language.text(Text::Dark),
         }
     }
     fn apply(self, ctx: &egui::Context) {
@@ -60,36 +77,47 @@ impl Theme {
         ctx.set_visuals_of(mode, self.visuals());
     }
     fn visuals(self) -> egui::Visuals {
-        let mut v = if self == Self::Light {
+        let mut visuals = if self == Self::Light {
             egui::Visuals::light()
         } else {
             egui::Visuals::dark()
         };
-        v.panel_fill = self.background();
-        v.window_fill = self.background();
-        v.selection.bg_fill = self.accent();
-        v.widgets.active.bg_fill = self.accent();
+        visuals.panel_fill = self.background();
+        visuals.window_fill = self.background();
+        visuals.selection.bg_fill = self.accent();
+        visuals.widgets.active.bg_fill = self.accent();
         if self == Self::Original {
-            v.override_text_color = Some(Color32::from_rgb(245, 243, 239));
-            v.widgets.inactive.weak_bg_fill = Color32::from_rgb(34, 34, 39);
-            v.widgets.inactive.bg_fill = Color32::from_rgb(34, 34, 39);
-            v.widgets.hovered.weak_bg_fill = Color32::from_rgb(44, 44, 51);
-            v.widgets.hovered.bg_fill = Color32::from_rgb(44, 44, 51);
+            visuals.override_text_color = Some(Color32::from_rgb(245, 243, 239));
+            visuals.widgets.inactive.weak_bg_fill = Color32::from_rgb(34, 34, 39);
+            visuals.widgets.inactive.bg_fill = Color32::from_rgb(34, 34, 39);
+            visuals.widgets.hovered.weak_bg_fill = Color32::from_rgb(44, 44, 51);
+            visuals.widgets.hovered.bg_fill = Color32::from_rgb(44, 44, 51);
         }
-        v
+        visuals
     }
 }
+/// Responsive calculator dimensions in logical pixels.
 pub struct Layout {
+    /// Height of a keypad button.
     pub key_height: f32,
+    /// Space allocated to the calculation history.
     pub tape_height: f32,
+    /// Maximum width of the calculator content.
     pub content_width: f32,
+    /// Height of the mode selector.
     pub header_height: f32,
+    /// Height of the current entry display.
     pub display_height: f32,
+    /// Height of the parentheses row.
     pub paren_height: f32,
+    /// Height of the history total row.
     pub total_height: f32,
+    /// Spacing between controls.
     pub gap: f32,
+    /// Whether the controls and history use separate columns.
     pub landscape: bool,
 }
+/// Compute compact control dimensions for the available viewport.
 pub fn layout(width: f32, height: f32) -> Layout {
     let landscape = (width >= 740.0 && height >= 500.0) || (width >= 540.0 && width > height);
     let gap = if height < 500.0 { 4.0 } else { 8.0 };
@@ -273,11 +301,19 @@ fn child_ui(ui: &mut egui::Ui, rect: egui::Rect, salt: &'static str) -> egui::Ui
 }
 #[derive(Serialize, Deserialize)]
 #[serde(default)]
+/// Persisted calculator state and preferences with transient UI interaction state.
 pub struct CalculatorApp {
+    /// Calculation state for both operating modes.
     pub calculator: Calculator,
+    /// Selected color palette.
     pub theme: Theme,
+    /// Persisted interface language; detected from locale only when absent.
+    pub language: Language,
+    /// Whether key presses play a sound.
     pub sound: bool,
+    /// Whether supported devices vibrate on key presses.
     pub haptics: bool,
+    /// Place history to the right of the keypad in landscape.
     pub history_right: bool,
     #[serde(skip)]
     settings_open: bool,
@@ -303,6 +339,7 @@ impl Default for CalculatorApp {
         Self {
             calculator: Calculator::default(),
             theme: Theme::default(),
+            language: Language::default(),
             sound: false,
             haptics: false,
             history_right: true,
@@ -319,6 +356,34 @@ impl Default for CalculatorApp {
     }
 }
 impl CalculatorApp {
+    /// Change and persist the interface language without changing calculations.
+    pub fn set_language(&mut self, language: Language, ctx: &egui::Context) {
+        if self.language != language {
+            self.language = language;
+            self.dirty = true;
+            self.last_status.clear();
+            ctx.request_repaint();
+        }
+        self.apply_language();
+    }
+    fn apply_language(&self) {
+        #[cfg(target_arch = "wasm32")]
+        if let Some(document) = web_sys::window().and_then(|window| window.document())
+            && let Some(root) = document.document_element()
+            && root.get_attribute("lang").as_deref() != Some(self.language.code())
+        {
+            let _ = root.set_attribute("lang", self.language.code());
+        }
+    }
+    fn current_text(&self) -> String {
+        if self.calculator.state().error {
+            self.language.text(Text::Undefined).into()
+        } else {
+            self.calculator.current_text()
+        }
+    }
+
+    /// Restore persisted preferences and install fonts and image loaders.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let stored = cc
             .storage
@@ -339,6 +404,7 @@ impl CalculatorApp {
         }
         app
     }
+    /// Apply a calculator action and trigger enabled feedback when accepted.
     pub fn dispatch(&mut self, action: Action) {
         if matches!(action, Action::Mode(_)) {
             self.touch.cancel();
@@ -506,7 +572,7 @@ impl CalculatorApp {
                 egui::WidgetInfo::labeled(
                     egui::WidgetType::Button,
                     enabled,
-                    "Letzte Stelle löschen",
+                    self.language.text(Text::Backspace),
                 )
             });
             icons::paint(
@@ -532,10 +598,10 @@ impl CalculatorApp {
             self.dispatch(action);
         }
     }
-    fn keypad(&mut self, ui: &mut egui::Ui, l: &Layout) {
-        let gap = l.gap;
+    fn keypad(&mut self, ui: &mut egui::Ui, metrics: &Layout) {
+        let gap = metrics.gap;
         let width = (ui.available_width() - gap * 3.0) / 4.0;
-        let size = Vec2::new(width, l.key_height);
+        let size = Vec2::new(width, metrics.key_height);
         let rows = [
             [
                 ("AC", Action::Clear),
@@ -582,7 +648,7 @@ impl CalculatorApp {
                 ui,
                 "0",
                 Action::Digit('0'),
-                Vec2::new(width * 2.0 + gap, l.key_height),
+                Vec2::new(width * 2.0 + gap, metrics.key_height),
                 false,
                 true,
             );
@@ -646,7 +712,7 @@ impl CalculatorApp {
                             groups.push(i);
                             (
                                 op.map(symbol).unwrap_or("").to_string(),
-                                "Gruppe".into(),
+                                self.language.text(Text::Group).into(),
                                 None,
                             )
                         }
@@ -806,7 +872,10 @@ impl CalculatorApp {
             );
         }
         let segment_width = (inset.width() - info_width - 48.0) * 0.5;
-        for (index, mode, label) in [(0, Mode::Time, "Zeit"), (1, Mode::Number, "Rechner")] {
+        for (index, mode, label) in [
+            (0, Mode::Time, self.language.text(Text::Time)),
+            (1, Mode::Number, self.language.text(Text::Number)),
+        ] {
             let r = egui::Rect::from_min_size(
                 egui::pos2(inset.left() + index as f32 * segment_width, inset.top()),
                 Vec2::new(segment_width, inset.height()),
@@ -850,7 +919,7 @@ impl CalculatorApp {
             .radius(100.0),
         );
         if response
-            .on_hover_text("Informationen und Einstellungen")
+            .on_hover_text(self.language.text(Text::InformationSettings))
             .clicked()
         {
             self.settings_open = true;
@@ -891,10 +960,14 @@ impl CalculatorApp {
             .radius(100.0),
         );
         undo.widget_info(|| {
-            egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Letzten Schritt zurück")
+            egui::WidgetInfo::labeled(
+                egui::WidgetType::Button,
+                true,
+                self.language.text(Text::Undo),
+            )
         });
         let undo_center = buttons::face_center(ui, &undo);
-        if undo.on_hover_text("Letzten Schritt zurück").clicked() {
+        if undo.on_hover_text(self.language.text(Text::Undo)).clicked() {
             self.dispatch(Action::Undo);
         }
         icons::paint(
@@ -907,7 +980,7 @@ impl CalculatorApp {
         paint_text(
             ui,
             egui::Rect::from_min_max(r.min, egui::pos2(r.left() + 60.0, r.bottom())),
-            "SUMME",
+            self.language.text(Text::Total),
             11.0,
             ui.visuals().weak_text_color(),
             true,
@@ -931,11 +1004,14 @@ impl CalculatorApp {
             }
         }
     }
-    fn history_panel(&mut self, ui: &mut egui::Ui, rect: egui::Rect, l: &Layout) {
+    fn history_panel(&mut self, ui: &mut egui::Ui, rect: egui::Rect, metrics: &Layout) {
         ui.painter().rect_filled(rect, 18.0, self.theme.panel());
         let tape_rect = egui::Rect::from_min_max(
             rect.min + Vec2::splat(8.0),
-            egui::pos2(rect.right() - 8.0, rect.bottom() - l.total_height - 4.0),
+            egui::pos2(
+                rect.right() - 8.0,
+                rect.bottom() - metrics.total_height - 4.0,
+            ),
         );
         let mut tape_ui = child_ui(ui, tape_rect, "history");
         tape_ui.spacing_mut().item_spacing.y = 2.0;
@@ -943,29 +1019,32 @@ impl CalculatorApp {
         self.total_bar(
             ui,
             egui::Rect::from_min_max(
-                egui::pos2(rect.left(), rect.bottom() - l.total_height),
+                egui::pos2(rect.left(), rect.bottom() - metrics.total_height),
                 rect.max,
             ),
         );
     }
-    fn controls(&mut self, ui: &mut egui::Ui, rect: egui::Rect, l: &Layout) {
-        let keypad_height = l.key_height * 5.0 + l.gap * 4.0;
+    fn controls(&mut self, ui: &mut egui::Ui, rect: egui::Rect, metrics: &Layout) {
+        let keypad_height = metrics.key_height * 5.0 + metrics.gap * 4.0;
         let keypad_rect = egui::Rect::from_min_max(
             egui::pos2(rect.left(), rect.bottom() - keypad_height),
             rect.max,
         );
         let paren_rect = egui::Rect::from_min_size(
-            egui::pos2(rect.left(), keypad_rect.top() - l.gap - l.paren_height),
-            Vec2::new(rect.width(), l.paren_height),
+            egui::pos2(
+                rect.left(),
+                keypad_rect.top() - metrics.gap - metrics.paren_height,
+            ),
+            Vec2::new(rect.width(), metrics.paren_height),
         );
         let display_rect = egui::Rect::from_min_size(
             egui::pos2(
                 rect.left() + 8.0,
-                paren_rect.top() - l.gap - l.display_height,
+                paren_rect.top() - metrics.gap - metrics.display_height,
             ),
-            Vec2::new(rect.width() - 16.0, l.display_height),
+            Vec2::new(rect.width() - 16.0, metrics.display_height),
         );
-        let text = self.calculator.current_text();
+        let text = self.current_text();
         paint_text(
             ui,
             display_rect,
@@ -973,7 +1052,7 @@ impl CalculatorApp {
             if text.len() > 18 {
                 25.0
             } else {
-                l.display_height * 0.78
+                metrics.display_height * 0.78
             },
             self.theme.accent(),
             true,
@@ -983,7 +1062,7 @@ impl CalculatorApp {
             paint_text(
                 ui,
                 egui::Rect::from_min_size(display_rect.min, Vec2::new(display_rect.width(), 16.0)),
-                &self.calculator.notice,
+                self.language.text(Text::Limit),
                 11.0,
                 self.theme.accent(),
                 false,
@@ -991,9 +1070,9 @@ impl CalculatorApp {
             );
         }
         let mut paren_ui = child_ui(ui, paren_rect, "parentheses");
-        paren_ui.spacing_mut().item_spacing = Vec2::splat(l.gap);
+        paren_ui.spacing_mut().item_spacing = Vec2::splat(metrics.gap);
         paren_ui.horizontal(|ui| {
-            let size = Vec2::new((rect.width() - l.gap) * 0.5, l.paren_height);
+            let size = Vec2::new((rect.width() - metrics.gap) * 0.5, metrics.paren_height);
             self.key(
                 ui,
                 "(",
@@ -1011,16 +1090,16 @@ impl CalculatorApp {
                 self.calculator.can_close(),
             );
         });
-        self.keypad(&mut child_ui(ui, keypad_rect, "keypad"), l);
+        self.keypad(&mut child_ui(ui, keypad_rect, "keypad"), metrics);
     }
     fn calculator_ui(&mut self, ui: &mut egui::Ui, width: f32, height: f32) {
-        let l = layout(width, height);
-        let size = Vec2::new(l.content_width, height);
+        let metrics = layout(width, height);
+        let size = Vec2::new(metrics.content_width, height);
         let rect = egui::Rect::from_min_size(
             ui.min_rect().min + Vec2::new((width - size.x) * 0.5, (height - size.y) * 0.5),
             size,
         );
-        if l.landscape {
+        if metrics.landscape {
             let column_width = (rect.width() - 16.0) * 0.5;
             let left = egui::Rect::from_min_size(rect.min, Vec2::new(column_width, rect.height()));
             let right =
@@ -1034,24 +1113,29 @@ impl CalculatorApp {
                 ui,
                 egui::Rect::from_min_size(
                     controls.min,
-                    Vec2::new(controls.width(), l.header_height),
+                    Vec2::new(controls.width(), metrics.header_height),
                 ),
             );
-            self.controls(ui, controls, &l);
-            self.history_panel(ui, history, &l);
+            self.controls(ui, controls, &metrics);
+            self.history_panel(ui, history, &metrics);
         } else {
             self.mode_bar(
                 ui,
-                egui::Rect::from_min_size(rect.min, Vec2::new(rect.width(), l.header_height)),
+                egui::Rect::from_min_size(rect.min, Vec2::new(rect.width(), metrics.header_height)),
             );
-            let controls_height =
-                l.key_height * 5.0 + l.gap * 6.0 + l.paren_height + l.display_height;
+            let controls_height = metrics.key_height * 5.0
+                + metrics.gap * 6.0
+                + metrics.paren_height
+                + metrics.display_height;
             let history = egui::Rect::from_min_max(
-                egui::pos2(rect.left(), rect.top() + l.header_height + l.gap),
-                egui::pos2(rect.right(), rect.bottom() - controls_height - l.gap),
+                egui::pos2(
+                    rect.left(),
+                    rect.top() + metrics.header_height + metrics.gap,
+                ),
+                egui::pos2(rect.right(), rect.bottom() - controls_height - metrics.gap),
             );
-            self.history_panel(ui, history, &l);
-            self.controls(ui, rect, &l);
+            self.history_panel(ui, history, &metrics);
+            self.controls(ui, rect, &metrics);
         }
         ui.allocate_rect(rect, egui::Sense::hover());
     }
@@ -1157,6 +1241,7 @@ impl eframe::App for CalculatorApp {
                 self.calculator_ui(ui, width, height);
             });
         self.settings(ctx);
+        self.apply_language();
         #[cfg(target_arch = "wasm32")]
         crate::feedback::configure_sound(self.sound);
         if self.settings_open {
@@ -1165,8 +1250,9 @@ impl eframe::App for CalculatorApp {
         #[cfg(target_arch = "wasm32")]
         {
             let status = format!(
-                "{} | Summe {}",
-                self.calculator.current_text(),
+                "{} | {} {}",
+                self.current_text(),
+                self.language.text(Text::Total),
                 self.calculator.label(self.calculator.total(), false)
             );
             if status != self.last_status {
@@ -1222,7 +1308,10 @@ mod rendering_tests {
             },
         ] {
             let ctx = egui::Context::default();
-            let mut app = CalculatorApp::default();
+            let mut app = CalculatorApp {
+                language: Language::German,
+                ..Default::default()
+            };
             let pos = egui::pos2(50.0, 50.0);
             let mut clicks = 0;
             for step in 0..4 {
@@ -1311,6 +1400,7 @@ mod rendering_tests {
                 configure_fonts(&ctx);
                 let mut app = CalculatorApp {
                     history_right: right,
+                    language: Language::German,
                     ..Default::default()
                 };
                 for _ in 0..3 {
@@ -1389,7 +1479,10 @@ mod rendering_tests {
     fn phone_safe_area_keeps_a_simple_group_header_visible() {
         let ctx = egui::Context::default();
         configure_fonts(&ctx);
-        let mut app = CalculatorApp::default();
+        let mut app = CalculatorApp {
+            language: Language::German,
+            ..Default::default()
+        };
         for c in "(25+25)".chars() {
             app.calculator.apply(Action::from_char(c).unwrap());
         }
@@ -1436,7 +1529,10 @@ mod rendering_tests {
         ] {
             let ctx = egui::Context::default();
             configure_fonts(&ctx);
-            let mut app = CalculatorApp::default();
+            let mut app = CalculatorApp {
+                language: Language::German,
+                ..Default::default()
+            };
             if long_entry {
                 app.calculator.apply(Action::Mode(Mode::Number));
                 app.calculator.apply(Action::Separator);
@@ -1556,6 +1652,7 @@ mod history_alignment_tests {
         configure_fonts(&ctx);
         let mut app = CalculatorApp {
             history_right: right,
+            language: Language::German,
             ..Default::default()
         };
         app.calculator.apply(Action::Mode(mode));
@@ -1625,7 +1722,10 @@ mod history_alignment_tests {
         let ctx = egui::Context::default();
         configure_fonts(&ctx);
         ctx.enable_accesskit();
-        let mut app = CalculatorApp::default();
+        let mut app = CalculatorApp {
+            language: Language::German,
+            ..Default::default()
+        };
         for c in "((((((((25+25))))))))".chars() {
             app.calculator.apply(Action::from_char(c).unwrap());
         }
@@ -1737,6 +1837,7 @@ mod settings_footer_tests {
             configure_fonts(&ctx);
             let mut app = CalculatorApp {
                 settings_open: true,
+                language: Language::German,
                 ..Default::default()
             };
             let mut previous: Option<f32> = None;
@@ -1817,6 +1918,7 @@ mod mode_shortcut_tests {
     fn closing_settings_then_switching_in_one_frame_keeps_both_events() {
         let mut app = CalculatorApp {
             settings_open: true,
+            language: Language::German,
             ..Default::default()
         };
         let ctx = egui::Context::default();
@@ -1842,7 +1944,10 @@ mod mode_shortcut_tests {
     }
     #[test]
     fn mode_shortcuts_preserve_calculations_and_respect_settings() {
-        let mut app = CalculatorApp::default();
+        let mut app = CalculatorApp {
+            language: Language::German,
+            ..Default::default()
+        };
         for c in "130=".chars() {
             app.dispatch(Action::from_char(c).unwrap());
         }
@@ -1873,6 +1978,7 @@ mod settings_navigation_tests {
             configure_fonts(&ctx);
             let mut app = CalculatorApp {
                 settings_open: true,
+                language: Language::German,
                 ..Default::default()
             };
             let mut labels = Vec::new();
@@ -1950,7 +2056,10 @@ mod quick_touch_feedback_tests {
     fn same_frame_touch_commits_once_and_animates_without_an_emulated_pointer() {
         let ctx = egui::Context::default();
         configure_fonts(&ctx);
-        let mut app = CalculatorApp::default();
+        let mut app = CalculatorApp {
+            language: Language::German,
+            ..Default::default()
+        };
         draw(&mut app, &ctx, 0.0, vec![]);
         draw(&mut app, &ctx, 0.1, vec![]);
         let resting = seven_height(&draw(&mut app, &ctx, 0.2, vec![]));
@@ -1982,5 +2091,45 @@ mod quick_touch_feedback_tests {
         draw(&mut app, &ctx, 0.3, vec![]);
         assert!((seven_height(&draw(&mut app, &ctx, 0.6, vec![])) - resting).abs() < 0.1);
         assert_eq!(app.calculator.current_text(), "0:07");
+    }
+}
+
+#[cfg(test)]
+mod language_preference_tests {
+    use super::*;
+    #[test]
+    fn missing_language_uses_locale_and_saved_override_survives_restore() {
+        let absent: CalculatorApp = serde_json::from_str("{}").unwrap();
+        assert_eq!(absent.language, Language::system());
+        for language in [Language::German, Language::English] {
+            let app = CalculatorApp {
+                language,
+                ..Default::default()
+            };
+            let saved = serde_json::to_string(&app).unwrap();
+            assert_eq!(CalculatorApp::restore(Some(&saved)).language, language);
+        }
+    }
+    #[test]
+    fn language_switch_preserves_calculation_and_localizes_errors() {
+        let ctx = egui::Context::default();
+        let mut app = CalculatorApp::default();
+        for character in "25+5=".chars() {
+            app.dispatch(Action::from_char(character).unwrap());
+        }
+        let calculation = serde_json::to_string(&app.calculator).unwrap();
+        app.set_language(Language::English, &ctx);
+        assert_eq!(app.language.text(Text::Group), "Group");
+        app.set_language(Language::German, &ctx);
+        assert_eq!(app.language.text(Text::Group), "Gruppe");
+        assert_eq!(serde_json::to_string(&app.calculator).unwrap(), calculation);
+        assert!(app.dirty);
+        app.dispatch(Action::Mode(Mode::Number));
+        for character in "1/0=".chars() {
+            app.dispatch(Action::from_char(character).unwrap());
+        }
+        assert_eq!(app.current_text(), "Nicht definiert");
+        app.set_language(Language::English, &ctx);
+        assert_eq!(app.current_text(), "Undefined");
     }
 }

@@ -1,3 +1,34 @@
+/** Select the first supported browser language; unsupported locales use English. */
+function browserLanguage() {
+  for (const locale of navigator.languages || [navigator.language]) {
+    const primary = typeof locale === 'string' ? locale.toLowerCase().split(/[-_]/)[0] : '';
+    if (primary === 'de' || primary === 'en') return primary;
+  }
+  return 'en';
+}
+
+/** Keep the HTML shell aligned with the language selected by the Rust frontend. */
+function updateShellLabels() {
+  const german = document.documentElement.lang === 'de';
+  document.title = german ? 'Calculator · Zeit- und Zahlenrechner' : 'Calculator · Time and number calculator';
+  const loading = document.getElementById?.('loading');
+  if (loading) loading.textContent = german ? 'Calculator wird geladen …' : 'Loading calculator…';
+  const canvas = document.getElementById?.('calculator-canvas');
+  canvas?.setAttribute('aria-label', german
+    ? 'Zeit- und Zahlenrechner. Bedienung mit Ziffern, Rechenzeichen und Enter.'
+    : 'Time and number calculator. Use digits, operators and Enter.');
+  const updateButton = document.querySelector('#update');
+  if (updateButton) {
+    updateButton.title = german ? 'Neue Version verfügbar · jetzt aktualisieren' : 'New version available · update now';
+    updateButton.setAttribute?.('aria-label', updateButton.title);
+  }
+}
+document.documentElement.lang = browserLanguage();
+updateShellLabels();
+if (typeof MutationObserver !== 'undefined') {
+  new MutationObserver(updateShellLabels).observe(document.documentElement, {attributes: true, attributeFilter: ['lang']});
+}
+
 // Keep app shortcuts from opening browser Help or Find while the canvas is focused.
 document.addEventListener('keydown', event => {
   if (event.target?.id === 'calculator-canvas' && !event.ctrlKey && !event.metaKey && !event.altKey && ['F1', 'F2', 'F3'].includes(event.key)) {
@@ -23,7 +54,7 @@ window.visualViewport?.addEventListener('resize', syncViewport);
 window.visualViewport?.addEventListener('scroll', syncViewport);
 document.addEventListener('visibilitychange', () => {if (!document.hidden) syncViewport();});
 
-const update = document.querySelector('#update');
+const updateButton = document.querySelector('#update');
 let reloading = false;
 let hadController = !!navigator.serviceWorker?.controller;
 if ('serviceWorker' in navigator) {
@@ -33,18 +64,18 @@ if ('serviceWorker' in navigator) {
     reloading = true;
     location.reload();
   });
+  /** Attach lifecycle checks to an existing registration, even after offline launch. */
   const watchUpdates = registration => {
     const offer = () => {
       if (registration.waiting && navigator.serviceWorker.controller) {
-        update.hidden = false;
-        update.title = 'Neue Version verfügbar · jetzt aktualisieren';
-        update.setAttribute('aria-label', update.title);
+        updateButton.hidden = false;
+        updateShellLabels();
       }
     };
     const watchInstalling = () => registration.installing?.addEventListener('statechange', offer);
     registration.addEventListener('updatefound', watchInstalling);
     watchInstalling();
-    update.addEventListener('click', () => registration.waiting?.postMessage({type:'ACTIVATE_UPDATE'}));
+    updateButton.addEventListener('click', () => registration.waiting?.postMessage({type:'ACTIVATE_UPDATE'}));
     let checking = false;
     const check = async () => {
       offer();

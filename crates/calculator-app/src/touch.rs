@@ -3,17 +3,21 @@ use calculator_core::Action;
 use eframe::egui::{Pos2, Rect};
 use std::collections::HashMap;
 #[derive(Clone, Copy)]
+/// Stable interaction geometry, independent of the animated button face.
 pub struct Target {
     pub rect: Rect,
     pub action: Action,
+    /// Neighbor-search group: keypad and parentheses must not share hit margins.
     pub group: u8,
 }
 #[derive(Default)]
+/// Track each finger independently and commit its original key on release.
 pub struct TouchController {
     contacts: HashMap<u64, Target>,
     started: HashMap<u64, Target>,
 }
 impl TouchController {
+    /// Clear visual pulses from the previous frame, preserving held contacts.
     pub fn begin_frame(&mut self) {
         self.started.clear();
     }
@@ -40,6 +44,7 @@ impl TouchController {
         self.contacts.clear();
         self.started.clear();
     }
+    /// Allow release drift up to neighboring keys while retaining the original action.
     pub fn end(&mut self, id: u64, pos: Pos2, targets: &[Target]) -> Option<Action> {
         let target = self.contacts.remove(&id)?;
         let rect = target.rect;

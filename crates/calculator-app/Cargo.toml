@@ -17,4 +17,8 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElement", "Navigator", "AudioContext", "OscillatorNode", "GainNode", "AudioNode", "AudioParam", "AudioDestinationNode"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+sys-locale = "0.3"
 rodio = { version = "=0.21.1", default-features = false, features = ["playback"] }
+
+[build-dependencies]
+winresource = "=0.1.34"

@@ -1,50 +1,49 @@
-# Vergleichsmethodik
+# Comparison methodology
 
-Verglichen werden Release-Builds des JavaScript-Originals (0274b42) und der
-Rust-WASM-App. Keine pauschale Annahme eines Geschwindigkeitsvorteils.
+Compare release builds of the JavaScript original (`0274b42`) and the Rust/WASM
+app without assuming that either language is faster.
 
-- Download: gesamte App-Shell, rohe Bytes und gzip-komprimierte Bytes separat.
-- Start: Navigation bis erfolgreiche erste Tastaturberechnung, kalter Kontext
-  und Offline-/Cache-Neustart; gleiche Browserengine, Viewport und Hardware.
-- Eingabe: wiederholte Berechnungen sowie langer Verlauf bis 1.000 Zeilen.
-- Ressourcen: CPU-Zeit und Speicher getrennt erfassen. JavaScript-Heap misst
-  weder die gesamte WASM-Nutzung noch GPU-/Prozessspeicher und wird nicht als
-  Gesamt-RAM interpretiert.
-- Mindestens zehn Durchläufe; Median und Messumgebung angeben. Lokale HTTP-Werte
-  sind keine Aussage über mobile Netze oder Cloudflare-Latenzen.
+- Download: measure the complete app shell, reporting raw and gzip bytes separately.
+- Startup: navigation to the first successful keyboard calculation, both in a cold
+  context and after an offline/cache restart; use the same browser engine,
+  viewport and hardware.
+- Input: repeated calculations and long histories up to 1,000 rows.
+- Resources: record CPU time and memory separately. JavaScript heap excludes parts
+  of WASM, GPU and process memory and must not be interpreted as total RAM.
+- Run at least ten trials; report the median and environment. Local HTTP timings
+  do not characterize mobile networks or Cloudflare latency.
 
-Mit `CALCULATOR_REFERENCE_ROOT` den vorhandenen Original-Checkout auswählen
-(Standard: Geschwisterverzeichnis `../simple-calculator`).
-`node scripts/benchmark.cjs` schreibt lokale Messungen nach `.cache/benchmark.json`.
-Der zweite Server für das Original wird nur lesend mit dessen vorhandenem
-Produktionsbuild gestartet. Ergebnisse und Grenzen des geprüften Standes werden
-im Verifikationsbericht festgehalten.
+Set `CALCULATOR_REFERENCE_ROOT` to an existing original checkout (default:
+`../simple-calculator`). `node scripts/benchmark.cjs` writes local measurements
+to `.cache/benchmark.json`. The original's second server reads its existing
+production build without modifying it. Record results and limitations of the
+measured revision in the verification report.
 
-## Erste lokale Messung · 15. November 2026
+## First local measurement · 15 November 2026
 
-Windows, Intel i9-13900K, Chromium 159 headless mit Software-Grafik, 400 × 760,
-HTTP auf Loopback, zehn Start-/Eingabedurchläufe. Beide vorhandenen Release-Builds;
-kein mobiles Netzwerk und kein Cold-Compiler-Cache nach Browser-Prozessstart.
+Windows, Intel i9-13900K, headless Chromium 159 with software graphics, 400 × 760,
+loopback HTTP, ten startup/input trials. Both existing release builds; no mobile
+network and no cold compiler cache after browser process startup.
 
-| Messwert | JavaScript | Rust/WASM |
+| Measurement | JavaScript | Rust/WASM |
 | --- | ---: | ---: |
-| App-Dateien unkomprimiert | 334 KB | 3,61 MB |
-| Summe gzip-komprimierter Dateien | 273 KB | 1,68 MB |
-| Navigation bis erste erfolgreiche Rechnung, Median | 88 ms | 79 ms |
-| Warmer Neustart, Median | 42 ms | 46 ms |
-| Einzelne Eingabe, kurzer Verlauf | 9 ms | 17 ms |
-| Einzelne Eingabe, 900 Verlaufseinträge | 2,4 ms | 16,6 ms |
-| 900 Einträge aufbauen, einmaliger Lastlauf | 20,75 s | 0,63 s |
-| Renderer-Taskzeit dieses Lastlaufs | 19,13 s | 0,23 s |
+| Uncompressed app files | 334 KB | 3.61 MB |
+| Sum of gzip-compressed files | 273 KB | 1.68 MB |
+| Navigation to first successful calculation, median | 88 ms | 79 ms |
+| Warm restart, median | 42 ms | 46 ms |
+| Single input, short history | 9 ms | 17 ms |
+| Single input, 900 history entries | 2.4 ms | 16.6 ms |
+| Build 900 entries, single load run | 20.75 s | 0.63 s |
+| Renderer task time for that load run | 19.13 s | 0.23 s |
 
-Die Zahl von 900 Einträgen wurde in beiden gespeicherten Zuständen geprüft.
-Die Eingabezeiten enthalten Playwright-Aufwand und Frame-Timing. Der Lastlauf
-misst bewusst auch die unterschiedlichen Render-/Speicherstrategien; er beweist
-keinen allgemeinen Vorteil von Rust als Sprache. Seine CPU-Werte sind ein einzelner
-Durchlauf, keine Medianwerte. Die Downloadsumme zählt alle App-Dateien einschließlich
-Icons; separate Lizenzdokumente gehören nicht zur vorgeladenen App-Shell.
+Both saved states were checked to contain 900 entries. Input timings include
+Playwright overhead and frame timing. The load run intentionally includes the
+different rendering/storage strategies; it does not establish a general language
+advantage for Rust. Its CPU values are from one run, not medians. Download totals
+include all app files, including icons; separate license documents are outside
+the precached app shell.
 
-JavaScript-Heap nach dem Lastlauf: etwa 2,6 MB versus 6,0 MB. Dies ist **kein**
-Gesamtspeichervergleich: WASM-Speicher, Grafikressourcen und Prozess-RAM sind damit
-nicht vollständig erfasst. Ein belastbarer RAM-/Akkuvergleich und Messungen auf
-realen mobilen Geräten bleiben ergänzende Prüfungen.
+JavaScript heap after the load run: about 2.6 MB versus 6.0 MB. This is **not** a
+total memory comparison: WASM memory, graphics resources and process RAM are not
+fully included. Reliable RAM/battery comparisons and real mobile device
+measurements remain additional work.

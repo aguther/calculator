@@ -1,21 +1,26 @@
 # Calculator
 
-Rust-Zeitrechner mit egui/eframe für Browser, Windows und Linux. Eigenständige
-Vergleichsversion von [simple-calculator](https://github.com/aguther/simple-calculator).
-Das ursprüngliche Projekt und dessen Deployment werden nicht verändert.
+A Rust time calculator built with egui/eframe for browsers, Windows and Linux.
+This is an independent comparison implementation of
+[simple-calculator](https://github.com/aguther/simple-calculator). The original
+repository and deployment remain unchanged.
 
-## Funktionen
+## Features
 
-Zeit- und Zahlenmodus, Kurzschreibweise (`145` → `1:45`), Sekunden, Skalare bei
-Multiplikation/Division, Vorrangregeln, Klammern, Zwischensummen, Verlauf und Undo.
-Themes **Original**, **Hell**, **Dunkel** funktionieren in PWA und Desktop-App.
-Berechnungen und Einstellungen werden lokal gespeichert; keine Telemetrie und
-keine Synchronisierung. 64 Zeichen pro Eingabe, 1.000 Verlaufseinträge.
+Time and number modes, shorthand (`145` → `1:45`), seconds, scalar
+multiplication/division, operator precedence, parentheses, subtotals, history and
+undo. Original, Light and Dark themes work in the PWA and desktop app. The interface supports German and English. The initial language follows the
+system or browser locale; a manual choice in Settings is saved on the device.
 
-## Lokal starten
+Calculations and preferences stay on the device: no telemetry or synchronization.
+Inputs are limited to 64 characters and history to 1,000 entries.
 
-Rustup installiert die in `rust-toolchain.toml` festgeschriebene Toolchain und das
-WASM-Ziel. Windows benötigt zum Bauen die Visual Studio C++ Build Tools.
+## Run locally
+
+Rustup installs the pinned toolchain and WASM target from `rust-toolchain.toml`.
+Windows builds also require Visual Studio C++ Build Tools. Install Python >=3.11
+and Node.js >=24 for web builds and tests. Linux build dependencies are listed in
+[CI](.github/workflows/ci.yml); see [desktop requirements](docs/desktop.md).
 
 ```sh
 cargo run -p calculator
@@ -23,20 +28,19 @@ cargo install trunk --version 0.21.14 --locked
 trunk serve
 ```
 
-Die Entwicklungsseite läuft auf http://127.0.0.1:8080. Für den produktiven
-Offline-Modus den vollständigen PWA-Build verwenden:
+Open http://127.0.0.1:8080. For the complete offline PWA, build and serve it with:
 
 ```sh
 python scripts/build-web.py
 node scripts/server.cjs
 ```
 
-Dann http://127.0.0.1:8765 öffnen. Trunk allein erzeugt bewusst keinen
-Service Worker. Python >=3.11 und Node >=24 werden für Build/Tests benötigt.
-Linux-Buildpakete siehe `.github/workflows/ci.yml`; Laufzeitvoraussetzungen unter
-[Desktop](docs/desktop.md).
+Open http://127.0.0.1:8765. Trunk alone intentionally does not generate a service
+worker. Start with [Contributing](CONTRIBUTING.md) for setup, checks and a source
+map, or read the [architecture](docs/architecture.md) for persistence and update
+contracts.
 
-## Prüfen
+## Check changes
 
 ```sh
 cargo fmt --all -- --check
@@ -45,47 +49,58 @@ cargo clippy -p calculator --target wasm32-unknown-unknown --locked -- -D warnin
 cargo test --workspace --locked
 node scripts/reference-fixtures.cjs --check
 python scripts/test_web.py
+node --test tests/sw.test.cjs tests/viewport.test.cjs tests/audio.test.cjs tests/pwa-update.test.cjs
+python scripts/build-web.py
 npm ci
 npx playwright install chromium firefox webkit
 npm test
 ```
 
-Die Browser-Tests benötigen zuvor `python scripts/build-web.py`. Für isolierte
-Browser-Downloads kann `PLAYWRIGHT_BROWSERS_PATH` auf `.cache/ms-playwright`
-gesetzt werden. `cargo run --release -p calculator --example smoke` öffnet ein
-Testfenster und beendet es nach drei Frames.
+Browser tests require the complete web build. Set `PLAYWRIGHT_BROWSERS_PATH` to
+`.cache/ms-playwright` to isolate browser downloads if needed.
+`cargo run --release -p calculator --example smoke` opens a test window and exits
+after three frames; it needs a working graphical session.
 
-## Veröffentlichen
+## Deployment and releases
 
-**`main` und Pull Requests veröffentlichen nichts.** Nur ein stabiler Versions-Tag
-wie `v0.1.0` führt nach erfolgreichen Prüfungen zu Desktop-Downloads auf GitHub
-Releases und zum Cloudflare-Deployment `calculator`.
+Pushes to `main` deploy the verified web artifact to the separate
+[calculator-dev site](https://calculator-dev.andreas-7f3.workers.dev) only after
+all Windows, Linux and web checks pass. Pull requests do not deploy.
+Production (`calculator`) and GitHub desktop downloads are published only by a
+stable version tag, such as `v0.1.10`, after successful release checks.
+See the [release procedure](docs/releases.md) for secrets, gates and recovery.
+Do not create a first production tag before app acceptance.
 
-Vorgehen, erforderliche Secrets und Fehlerbehebung: [Release-Anleitung](docs/releases.md).
-Den ersten produktiven Tag erst nach Abnahme der App erstellen.
+## Differences and limitations
 
-## Unterschiede und Grenzen
+All variants use an egui canvas. Browsers require WebAssembly, JavaScript and
+WebGL. The original HTML/CSS is not reused, so fonts, scrolling and touch gestures
+can differ. The canvas provides an HTML live output and keyboard controls, but
+not the original DOM app's full semantic screen-reader interaction. Browser zoom
+and operating-system scaling are supported; installed iOS PWAs still need real
+device verification.
 
-Die GUI wird in allen Varianten durch egui gezeichnet. Browser benötigen
-WebAssembly, JavaScript und WebGL. HTML/CSS des Originals werden nicht verwendet;
-Schrift, Scrollverhalten und Touch-Gesten können deshalb abweichen.
-Die Browser-Canvas besitzt eine HTML-Live-Ausgabe und Tastaturbedienung, bietet
-aber nicht die vollständige semantische Screenreader-Bedienung des DOM-Originals.
-Browserzoom und Betriebssystem-Skalierung werden unterstützt; reale installierte
-iOS-PWAs müssen ergänzend auf einem Gerät geprüft werden.
+Haptics depend on browser/device support. Desktop offers optional key sounds but
+no general haptics interface. Calculation remains available without audio and,
+when local storage is blocked, for the current session. Data is not automatically
+imported from the original app.
 
-Haptik funktioniert nur bei Browser-/Geräteunterstützung. Desktop bietet optionale
-Tastentöne, aber keine allgemeine Haptik-Schnittstelle. Ohne Audioausgabe bleibt
-der Rechner bedienbar. Bei blockiertem lokalen Speicher bleibt die Berechnung
-für die aktuelle Sitzung verfügbar. Keine automatische Datenübernahme aus der
-ursprünglichen App.
+## Project documentation
 
-## Herkunft
+- [Architecture and source navigation](docs/architecture.md)
+- [Developer onboarding](CONTRIBUTING.md)
+- [Desktop installation](docs/desktop.md)
+- [Release procedure](docs/releases.md) and [version notes](docs/release-notes/)
+- [UI and PWA investigation notes](docs/ui-refinement.md)
+- [Performance methodology and historical measurements](docs/performance.md)
 
-MIT, Copyright 2026 Andreas Guther. Rechenregeln, Referenzcode, Icons und Gestaltung
-stammen aus `aguther/simple-calculator` (Referenzcommit `0274b42`). Der originale
-JavaScript-Kern und extrahierte Zustandsfunktionen unter `tests/reference/` dienen
-nur dem synthetischen Vergleich; ausgelieferte Berechnungen laufen in Rust.
-Noto Sans (Regular/SemiBold, SIL OFL 1.1) und die mit egui gelieferten Fallback-Schriften werden eingebettet. Vollständige verfügbare
-Lizenztexte der Cargo-Abhängigkeiten einschließlich Schriften werden den
-Desktop-Archiven beigelegt und als THIRD_PARTY_LICENSES.txt im Web-Build ausgeliefert.
+## Attribution
+
+MIT, Copyright 2026 Andreas Guther. Calculation rules, reference code, icons and
+design originate from `aguther/simple-calculator`, reference commit `0274b42`.
+The JavaScript core and extracted state functions in `tests/reference/` are used
+only for synthetic comparisons; shipped calculations run in Rust.
+
+Noto Sans Regular/SemiBold (SIL OFL 1.1) and egui's fallback fonts are embedded.
+Available full Cargo dependency licenses, including font licenses, accompany the
+desktop archives and ship as `THIRD_PARTY_LICENSES.txt` in the web build.

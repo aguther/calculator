@@ -1,61 +1,155 @@
-# Oberfläche und PWA-Korrekturen
+# UI and PWA refinement notes
 
-Die Gestaltung folgt weiterhin dem Referenzprojekt `simple-calculator`: einzeilige Verlaufszeilen mit Minuten vor dem rechtsbündigen Wert, stärkere Ziffern, getrennte Karten für Verlauf und Summe sowie eine gut erreichbare Moduswahl. Gruppen erhalten eine Kopfzeile, Einrückungen, Verbindungslinien und eine hervorgehobene Ergebniszeile. Der Rechnerkern und seine Referenzregeln bleiben unverändert.
+These notes preserve the investigation history. Later sections supersede earlier
+visual choices where stated; real-device observations remain distinct from
+browser emulation.
 
-Im Querformat schaltet „Verlauf rechts (Querformat)“ die Position des gesamten Verlaufs um. Neue Installationen verwenden rechts; eine ausdrücklich gespeicherte linke Position bleibt erhalten. Die numerische Ausrichtung bleibt unabhängig davon rechtsbündig. Große Fenster verwenden eine zentrierte, begrenzte Oberfläche; Tasten wachsen höchstens auf 76 logische Pixel Höhe. Kleine Fenster bleiben skalierbar und der Verlauf scrollbar.
+## Layout and initial PWA corrections
 
-Die PWA positioniert den Canvas innerhalb der iOS-Safe-Areas; eine Update-Meldung reserviert zusätzlich Platz. Haptik wird nur angeboten, wenn die Browserfunktion vorhanden ist. Fehlende Funktionen und geworfene Fehler dürfen die WASM-Berechnung nicht unterbrechen. Safari/iPhone bietet über die hier verwendete Browser-Schnittstelle keine Vibration; eine echte Geräteprüfung bleibt erforderlich.
+The design follows `simple-calculator`: single-line history rows with minutes
+before a right-aligned value, stronger digits, separate history/total cards and
+an accessible mode selector. Groups have headers, indentation, connector lines
+and an emphasized result row. Core calculation/reference rules are unchanged.
 
-GitHub-Builds ändern die laufende Cloudflare-Version nicht. Erst nach erfolgreichen Builds/Tests wird das vollständige Web-Artefakt hochgeladen. Der Service Worker hält die bestehende App aktiv, bis die neue Version vollständig geladen und das Update bewusst bestätigt wird. Ein unveränderter zweiter Tab speichert seinen veralteten Zustand beim gemeinsamen Neuladen nicht erneut über eine neuere Berechnung. Dies ist kein allgemeiner Mehrbenutzer-/Tab-Synchronisationsdienst; aktiv veränderte Tabs behalten weiterhin ihren eigenen Zustand.
+In landscape, the history-position setting moves the entire history panel.
+New installations place it on the right; an explicitly saved left preference is
+retained. Values remain right-aligned independently. Large windows use a centered,
+width-limited interface; keys grow to at most 76 logical pixels high. Small
+windows remain scalable with scrollable history.
 
-## Prüfung
+The PWA positions the canvas inside iOS safe areas and reserves extra space for
+an update notice. Haptics are offered only when the browser API exists. Missing
+APIs and thrown errors must not interrupt WASM calculation. Safari/iPhone does
+not provide vibration through this API; real-device testing remains necessary.
 
-Automatisierte Browser-Prüfung über Playwright (Browser-Plugin in dieser Sitzung nicht verfügbar): Chromium, Firefox, WebKit. Die Tests decken unter anderem fehlende/fehlerhafte Haptik, simulierte Safe-Areas, Speicherung, Touch, Themewechsel und Offline-Neustart ab. Der Update-Test hält den neuen WASM-Download absichtlich an, rechnet in der alten App weiter, prüft die wartende Version vor Freigabe und öffnet anschließend beide Tabs mit dem neuesten Rechenstand offline.
+Build jobs do not themselves change the running Cloudflare version. Deployment
+uses the complete artifact only after successful builds/tests. The service worker
+keeps the current app active until the new version is fully loaded and explicitly
+accepted. An unchanged second tab does not overwrite newer calculations with its
+stale state during a coordinated reload. This is not general multi-user/tab
+synchronization: actively edited tabs retain independent state.
 
-Rust-GUI-Tests prüfen einzeilige Minuten/Wert-Darstellung, Rechtsausrichtung, Panel-Seitenwechsel und sichtbare Tasten bei 300×400, 320×568, 400×760, 568×320, 844×390 und 1440×900. Zusätzlich gelten die bisherigen synthetischen JavaScript-/Rust-Referenzfälle. Visuell geprüft werden Original/Hell/Dunkel, kleine und große Ansichten und verschachtelte Gruppen. Installierte iOS-PWAs benötigen weiterhin eine ergänzende Prüfung auf einem echten iPhone.
+### Verification
 
-Schriftquelle und Lizenz: [eingebettete Noto-Sans-Schriften](../assets/fonts/README.md).
+Playwright covered Chromium, Firefox and WebKit; the browser plugin was unavailable
+in the original session. Coverage includes absent/failing haptics, simulated safe
+areas, persistence, touch, theme changes and offline restart. The update test
+intentionally stalls the new WASM download, calculates in the old app, checks the
+waiting version before activation, then opens both tabs offline with the latest
+calculation.
 
-## Dialogfuß und sichtbarer Viewport
+Rust GUI tests cover single-line minutes/value rendering, right alignment, panel
+side switching and visible keys at 300×400, 320×568, 400×760, 568×320, 844×390 and
+1440×900. Existing synthetic JavaScript/Rust reference cases also apply. Visual
+checks cover Original/Light/Dark, small/large layouts and nested groups. Installed
+iOS PWAs still need a physical iPhone check.
 
-Die Überschrift und der Fertig-Button bleiben außerhalb des inneren Scrollbereichs. Der GUI-Test prüft Sichtbarkeit und unveränderte Position beim Scrollen bei 400, 568 und 760 logischen Pixeln Höhe; ein Browser-Test schließt den Dialog nach dem Scrollen über den sichtbaren Button.
+Font source/license: [embedded Noto Sans](../assets/fonts/README.md).
 
-Für die PWA wird die sichtbare Höhe über [VisualViewport](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport) abgeglichen, mit `window.innerHeight` als Ersatz, falls die Schnittstelle fehlt. CSS behält `100dvh` als Ausgangswert. Größenänderungen, Wiederanzeigen und Rückkehr aus dem Hintergrund aktualisieren die Messung. Safe-Area-Abstände bleiben erhalten. Die Diagnose enthält ergänzend Browserhöhe, sichtbare Höhe, Offset und Systemabstände.
+## Dialog footer and visible viewport
 
-Aus der iPhone-Diagnose von Version 0.1.3 (402×716 logische Pixel, Skalierung 3) ist die gemeldete Canvas-Größe bekannt; die genaue Ursache der Abweichung zum sichtbaren Bildschirm war damit noch nicht eindeutig bestimmt. Die neue Höhenstrategie ist automatisiert abgesichert, muss aber nach Veröffentlichung auf dem betroffenen Gerät bestätigt werden.
+The heading and Done button stay outside the inner scroll area. GUI tests check
+visibility and unchanged position while scrolling at heights of 400, 568 and
+760 logical pixels; a browser test closes the scrolled dialog with its visible
+button.
 
-## Lucide und Audiofreigabe
+The PWA measures visible height with
+[VisualViewport](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport),
+falling back to `window.innerHeight`. CSS retains `100dvh` as the baseline.
+Resize, redisplay and background-return events refresh the measurement. Safe-area
+insets remain intact. Diagnostics include browser height, visible height, offset
+and system insets.
 
-`undo-2`, `delete` und `refresh-cw` stammen als Original-SVGs aus Lucide; Quellstand und Lizenz stehen unter `assets/icons/`. `egui_extras` mit SVG-Unterstützung zeichnet die Originalpfade in Desktop und WASM. Die Update-Schaltfläche lädt ihr Symbol aus dem eigenen Offline-Paket. Die ISC-Lizenz liegt den Distributionshinweisen bei.
+The iPhone diagnostic from 0.1.3 reported a canvas of 402×716 logical pixels at
+scale 3. That alone did not identify the exact cause of the visible-screen
+mismatch. Automated coverage protects the height strategy; the affected device
+must confirm behavior after publication.
 
-Der Browser-Audiokontext wird bei aktivierten Tastenklicks in direkten Pointer-/Touch-/Tastatur-Handlern erstellt beziehungsweise fortgesetzt. Die spätere WASM-Rechenaktion verwendet nur den bereits vorbereiteten gemeinsamen Kontext. Das folgt den [Web-Audio-Empfehlungen zur Benutzeraktivierung](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices). Fehler und ausstehende Resume-Promises blockieren keine Berechnung. Native Audioausgabe bleibt unverändert.
+## Lucide icons and audio activation
 
-Der frühere Aufruf im WASM-Renderzyklus war ein plausibler Grund für fehlenden Ton auf iOS; die konkrete Ursache auf dem Gerät ist damit noch nicht bestätigt. Zusätzlich sind [iOS-PWA-Resume-Probleme bei WebKit dokumentiert](https://bugs.webkit.org/show_bug.cgi?id=291892). Die hiesige Windows-WebKit-Testlaufzeit besitzt keine Web-Audio-Schnittstelle; dort ist der echte Audio-Gestentest explizit übersprungen. Chromium und Firefox prüfen ihn mit dem echten AudioContext; Unit-Tests erzwingen die direkte Gestenfreigabe und prüfen fehlgeschlagene Audioinitialisierung. Tatsächlich hörbare Ausgabe auf einem iPhone muss nach Veröffentlichung ergänzt werden.
+Original `undo-2`, `delete` and `refresh-cw` SVGs come from Lucide; revision and
+license are in `assets/icons/`. `egui_extras` SVG support renders the original
+paths on desktop and WASM. The update button loads its icon from the local
+offline package. Distribution notices include the ISC license.
 
-## Gemeldeter iOS-Standalone-Rand in 0.1.4
+When key sounds are enabled, direct pointer/touch/keyboard handlers create or
+resume the browser audio context. The later WASM action uses that prepared shared
+context, following [Web Audio user-activation guidance](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices).
+Errors and pending resume promises never block calculation. Native audio is
+unchanged.
 
-Die Gerätediagnose meldet innerHeight und visualViewport.height beide als 812px, safeTop=62px, safeBottom=34px und einen Canvas von 716px. Das entspricht exakt unserer Rechnung 812−62−34. Es bleibt kein Platz für die Update-Schaltfläche reserviert.
+The previous WASM-render-loop call was a plausible reason for missing iOS audio,
+but the device-specific cause was not confirmed. WebKit also documents
+[iOS PWA resume issues](https://bugs.webkit.org/show_bug.cgi?id=291892). The
+Windows WebKit test runtime used here lacked Web Audio, so its real audio gesture
+test was explicitly skipped. Chromium and Firefox use the real AudioContext;
+unit tests enforce direct gesture activation and cover initialization failure.
+Audible output on a physical iPhone still needs confirmation after publication.
 
-[WebKit 313800](https://bugs.webkit.org/show_bug.cgi?id=313800) beschreibt dieselben Zahlen (zusätzlich screen.height=874) und einen unteren Streifen außerhalb der für DOM/Canvas erreichbaren Fläche. [WebKit 301994](https://bugs.webkit.org/show_bug.cgi?id=301994) ist als Regression wieder geöffnet. Die Bildschirmhöhe des konkreten Geräts ist noch nicht gemessen; die Diagnose enthält dafür jetzt auch screenWidth/screenHeight, documentElement.clientHeight und den Zoomfaktor.
+## Reported iOS standalone margin in 0.1.4
 
-Der Viewport-Abgleich aus 0.1.4 kann diesen Plattformfall nicht beheben, wenn beide Browser-APIs bereits die reduzierte Höhe liefern. Die App verlängert den Canvas nicht blind auf screen.height, weil dadurch bedienbare Tasten außerhalb der tatsächlich erreichbaren Fläche landen könnten. Ein normaler Safari-Tab ist laut Fehlerbericht nicht von demselben Standalone-Problem betroffen. Änderungen an installierten Statusbar-Einstellungen und eine erneute Installation sind kein bestätigter allgemeiner Fix.
+Device diagnostics reported `innerHeight` and `visualViewport.height` as 812px,
+`safeTop=62px`, `safeBottom=34px` and a 716px canvas: exactly 812−62−34. No space
+was reserved for an update button.
 
-## Abgleich mit der funktionierenden ursprünglichen PWA
+[WebKit 313800](https://bugs.webkit.org/show_bug.cgi?id=313800) reports the same
+numbers, plus `screen.height=874`, and a bottom strip outside the DOM/canvas area.
+[WebKit 301994](https://bugs.webkit.org/show_bug.cgi?id=301994) was reopened as a
+regression. The affected device's screen height was not yet measured; diagnostics
+now include `screenWidth`, `screenHeight`, `documentElement.clientHeight` and zoom.
 
-Die nachgereichte Original-Diagnose zeigt dieselben 812px für window, document und visualViewport, aber safeArea.top=0 statt62; unten sind beide34px. Die Original-App endet bei812px, ihre letzte Taste bei778px. Beide Dokumente sind ungescrollt. Eine künstliche Erhöhung auf screen.height=874 ist daher nicht die Lösung des Originals.
+The 0.1.4 viewport adjustment cannot fix a platform case when both browser APIs
+already report reduced height. The app does not blindly extend to `screen.height`,
+which could place controls outside the reachable area. The report says a regular
+Safari tab is unaffected by the same standalone issue. Installed status-bar
+changes and reinstallation were not a confirmed general fix.
 
-Der konkrete Konfigurationsunterschied liegt in index.html: simple-calculator verwendet apple-mobile-web-app-status-bar-style=black, während calculator bisher black-translucent verwendete. Calculator übernimmt jetzt black. Der Build-Vertragstest verhindert eine unbeabsichtigte Rückkehr zur abweichenden Konfiguration; der Browser-Test bildet402×812 mit0px oberem und34px unterem Inset nach und betätigt die unterste Taste.
+## Comparison with the working original PWA
 
-Damit ist die frühere pauschale Schlussfolgerung „kein Code-Fix möglich“ für diesen Vergleich nicht ausreichend gewesen. Der WebKit-Bericht allein schließt einen Unterschied der installierten Statusbar-Konfiguration nicht aus. Nach Veröffentlichung muss das betroffene iPhone bestätigen, ob es die geänderten Installations-Metadaten übernimmt; möglicherweise muss die PWA dafür neu hinzugefügt werden. Vor einer Neuinstallation Berechnungen sichern, da Gerätespeicher verloren gehen kann. Die vorhandene Original-PWA bleibt unverändert.
+The subsequently supplied original diagnostic reported the same 812px for window,
+document and visual viewport, but `safeArea.top=0` instead of 62; both had a 34px
+bottom inset. The original app ended at 812px and its final key at 778px. Neither
+document was scrolled. Artificially increasing height to 874px therefore was not
+the original's solution.
 
-## PWA-Updates und Touch-Rückmeldung
+The concrete configuration difference was in `index.html`: `simple-calculator`
+used `apple-mobile-web-app-status-bar-style=black`, while Calculator used
+`black-translucent`. Calculator now uses `black`. A build-contract test prevents
+regression; a browser test simulates 402×812 with 0px top/34px bottom insets and
+activates the bottom key.
 
-Die PWA prüft auf neue Versionen beim Zurückkehren (`pageshow`, Fokus, Sichtbarkeit), beim Wiederherstellen der Verbindung und alle 60 Sekunden, solange sie sichtbar und online ist. Eine vorhandene Service-Worker-Registrierung wird auch nach einem Offline-Start überwacht. Gleichzeitige Prüfungen werden zusammengefasst, Netzwerkfehler stoppen spätere Versuche nicht. Installation und Freigabe bleiben getrennt: erst die vollständig geladene neue Version anbieten, aktivieren weiterhin nur über die Update-Schaltfläche.
+The earlier blanket conclusion that no code fix was possible was therefore
+insufficient for this comparison. A WebKit report alone does not rule out an
+installed status-bar configuration difference. After publication, the affected
+iPhone must confirm whether it picks up the changed installation metadata;
+re-adding the PWA may be necessary. Back up calculations before reinstalling,
+because device storage can be lost. The original PWA remains unchanged.
 
-Touch-Eingaben werden vor dem Zeichnen ausgewertet. Auch ein Start und Ende innerhalb desselben Frames hinterlassen eine sichtbare Druckrückmeldung; abgebrochene Kontakte werden verworfen. Die Tastenfläche sinkt sofort um größenabhängige 3,5–6 Pixel ein, ändert dabei ihren Kontrast und behält ihre Breite. Nach dem Loslassen federt sie ohne zusätzliche Haltephase innerhalb von 60 ms zurück. Form und Rundung der Tasten bleiben unverändert. Trefferflächen und Auslösen beim Loslassen bleiben erhalten.
+## PWA updates and touch feedback
 
-Geprüft durch Service-Worker-Lebenszyklustests, Browser-Updates ohne Neustart und nach Offline-Start, Touch-Tests mit überlappenden Kontakten und Renderingtests für kurze Berührungen einschließlich kompletter Start-/End-Ereignisse innerhalb eines Frames. Die konkrete Wahrnehmung auf einem physischen iPhone bleibt manuell zu prüfen.
+The PWA checks for updates on return (`pageshow`, focus, visibility), reconnection,
+and every 60 seconds while visible and online. Existing service-worker
+registrations remain monitored after offline startup. Concurrent checks coalesce;
+network errors do not stop subsequent attempts. Installation and activation stay
+separate: offer only a fully loaded version, and activate only through the update
+button.
 
-## Flache Tasten und Referenz-Webversion
+Touch input is processed before drawing. Even start/end events within one frame
+leave visible press feedback; canceled contacts are discarded. At this stage the
+key face immediately depressed by a size-dependent 3.5–6 pixels, changed contrast
+and retained width. It returned within 60 ms after release with no extra hold.
+Key shape/rounding, hit targets and release-triggered actions were preserved.
 
-Die dauerhafte 3D-Darstellung wurde entsprechend Version 0.1.5 entfernt: kein Sockel, keine Schattenkante und keine angehobene Tastenfläche. Form, Rundung und Farben bleiben erhalten. Die Rückmeldung orientiert sich an der ursprünglichen Webversion (`simple-calculator`, CSS-Referenz 0274b425): sofortige Skalierung auf 92 Prozent und sichtbarer Kontrastwechsel, anschließend Rückkehr innerhalb von 60 ms. Es wird keine Tiefe oder schräg wirkende Höhenverschiebung erzeugt. Trefferflächen und Touch-Abbruchverhalten bleiben unverändert.
+Coverage includes worker lifecycle tests, browser updates without restart and
+after offline startup, overlapping contacts and rendering of short touches,
+including same-frame start/end events. Perceived behavior on a physical iPhone
+still needs manual verification.
+
+## Flat keys and the reference web version
+
+The permanent 3D appearance was removed to match 0.1.5: no base, shadow edge or
+raised key face. Shape, rounding and colors remain. Feedback follows the original
+web version (`simple-calculator`, CSS reference `0274b425`): immediate scaling to
+92 percent and a visible contrast change, then return within 60 ms. There is no
+depth or slanted vertical displacement. Hit targets and touch cancellation remain
+unchanged. This supersedes the earlier vertical-depression visual treatment.

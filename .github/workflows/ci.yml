@@ -37,9 +37,16 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
+      - name: Validate Rust API documentation
+        if: runner.os == 'Linux'
+        env:
+          RUSTDOCFLAGS: '-D warnings'
+        run: cargo doc --workspace --no-deps --locked
       - run: node scripts/reference-fixtures.cjs --check
       - run: python scripts/test_web.py
-      - run: node --test tests/sw.test.cjs tests/viewport.test.cjs tests/audio.test.cjs tests/pwa-update.test.cjs
+      - name: Verify Windows icon sources and resource parser
+        run: python -m unittest discover -s scripts -p test_windows_icon.py
+      - run: node --test tests/sw.test.cjs tests/viewport.test.cjs tests/audio.test.cjs tests/pwa-update.test.cjs tests/locale-shell.test.cjs
       - run: cargo build --release --locked -p calculator
       - name: Desktop smoke test (Linux)
         if: runner.os == 'Linux'
