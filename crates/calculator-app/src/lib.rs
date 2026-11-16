@@ -1,6 +1,6 @@
 //! Shared desktop and browser UI.
 use calculator_core::{Action, Calculator, Mode, Step, format_number};
-use eframe::egui::{self, Color32, RichText, Vec2};
+use eframe::egui::{self, Color32, Vec2};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -282,6 +282,8 @@ pub struct CalculatorApp {
     #[serde(skip)]
     settings_open: bool,
     #[serde(skip)]
+    settings_tab: settings::SettingsTab,
+    #[serde(skip)]
     dirty: bool,
     #[serde(skip)]
     last_status: String,
@@ -305,6 +307,7 @@ impl Default for CalculatorApp {
             haptics: false,
             history_right: true,
             settings_open: false,
+            settings_tab: settings::SettingsTab::default(),
             dirty: false,
             last_status: String::new(),
             last_saved: None,
@@ -351,18 +354,31 @@ impl CalculatorApp {
         }
     }
     fn keyboard(&mut self, ctx: &egui::Context) {
-        if ctx.input(|i| i.key_pressed(egui::Key::F1)) {
-            self.settings_open = !self.settings_open;
-            return;
-        }
-        if self.settings_open {
-            if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
-                self.settings_open = false;
-            }
-            return;
-        }
         let events = ctx.input(|i| i.events.clone());
         for event in events {
+            if let egui::Event::Key {
+                key,
+                pressed: true,
+                repeat,
+                modifiers,
+                ..
+            } = &event
+            {
+                if *key == egui::Key::F1 && !modifiers.ctrl && !modifiers.command && !modifiers.alt
+                {
+                    if !repeat {
+                        self.settings_open = !self.settings_open;
+                    }
+                    continue;
+                }
+                if self.settings_open && *key == egui::Key::Escape {
+                    self.settings_open = false;
+                    continue;
+                }
+            }
+            if self.settings_open {
+                continue;
+            }
             let action = match event {
                 egui::Event::Text(text) => {
                     for c in text.chars() {
@@ -378,6 +394,8 @@ impl CalculatorApp {
                     modifiers,
                     ..
                 } if !modifiers.ctrl && !modifiers.command && !modifiers.alt => match key {
+                    egui::Key::F2 => Some(Action::Mode(Mode::Time)),
+                    egui::Key::F3 => Some(Action::Mode(Mode::Number)),
                     egui::Key::Enter => Some(Action::Equals),
                     egui::Key::Backspace => Some(Action::Backspace),
                     egui::Key::Delete => Some(Action::ClearEntry),
@@ -443,28 +461,23 @@ impl CalculatorApp {
             ),
             _ => (base, None),
         };
-        let text = RichText::new(if matches!(action, Action::Backspace) {
-            ""
-        } else {
-            label
-        })
+        let held = self
+            .touch
+            .is_pressed_at(ui.next_widget_position() + size * 0.5);
+        let button = buttons::PressButton::new(
+            if matches!(action, Action::Backspace) {
+                ""
+            } else {
+                label
+            },
+            size,
+            background.unwrap_or(self.theme.surface()),
+            foreground,
+        )
         .font(bold_font((size.y * 0.4).clamp(15.0, 28.0)))
-        .color(foreground);
-        let text = if matches!(
-            action,
-            Action::Clear | Action::ClearEntry | Action::Operator(_)
-        ) {
-            text.strong()
-        } else {
-            text
-        };
-        let mut button = egui::Button::new(text).corner_radius(15.0);
-        if let Some(background) = background {
-            button = button.fill(background);
-        }
-        let response = ui
-            .add_enabled_ui(enabled, |ui| ui.add_sized(size, button))
-            .inner;
+        .radius(15.0)
+        .held(held);
+        let response = ui.add_enabled(enabled, button);
         if matches!(action, Action::Backspace) {
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(
@@ -475,7 +488,7 @@ impl CalculatorApp {
             });
             icons::paint(
                 ui,
-                response.rect.center(),
+                buttons::face_center(ui, &response),
                 (size.y * 0.4).clamp(18.0, 28.0),
                 icons::Icon::Delete,
                 foreground,
@@ -776,24 +789,24 @@ impl CalculatorApp {
                 Vec2::new(segment_width, inset.height()),
             );
             let selected = self.calculator.mode == mode;
-            let response =
-                ui.put(
-                    r,
-                    egui::Button::new(RichText::new(label).font(bold_font(15.0)).color(
-                        if selected {
-                            ui.visuals().text_color()
-                        } else {
-                            ui.visuals().weak_text_color()
-                        },
-                    ))
-                    .fill(if selected {
+            let response = ui.put(
+                r,
+                buttons::PressButton::new(
+                    label,
+                    r.size(),
+                    if selected {
                         self.theme.surface()
                     } else {
-                        Color32::TRANSPARENT
-                    })
-                    .stroke(egui::Stroke::NONE)
-                    .corner_radius(12.0),
-                );
+                        self.theme.panel()
+                    },
+                    if selected {
+                        ui.visuals().text_color()
+                    } else {
+                        ui.visuals().weak_text_color()
+                    },
+                )
+                .font(bold_font(15.0)),
+            );
             if response.clicked() {
                 self.dispatch(Action::Mode(mode));
             }
@@ -804,9 +817,14 @@ impl CalculatorApp {
         );
         let response = ui.put(
             r,
-            egui::Button::new(RichText::new("i").font(bold_font(19.0)))
-                .fill(self.theme.surface())
-                .corner_radius(100.0),
+            buttons::PressButton::new(
+                "i",
+                r.size(),
+                self.theme.surface(),
+                ui.visuals().text_color(),
+            )
+            .font(bold_font(19.0))
+            .radius(100.0),
         );
         if response
             .on_hover_text("Informationen und Einstellungen")
@@ -841,19 +859,24 @@ impl CalculatorApp {
         );
         let undo = ui.put(
             undo_rect,
-            egui::Button::new("")
-                .fill(self.theme.surface())
-                .corner_radius(100.0),
+            buttons::PressButton::new(
+                "",
+                undo_rect.size(),
+                self.theme.surface(),
+                ui.visuals().weak_text_color(),
+            )
+            .radius(100.0),
         );
         undo.widget_info(|| {
             egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Letzten Schritt zurück")
         });
+        let undo_center = buttons::face_center(ui, &undo);
         if undo.on_hover_text("Letzten Schritt zurück").clicked() {
             self.dispatch(Action::Undo);
         }
         icons::paint(
             ui,
-            undo_rect.center(),
+            undo_center,
             22.0,
             icons::Icon::Undo,
             ui.visuals().weak_text_color(),
@@ -1008,63 +1031,6 @@ impl CalculatorApp {
             self.controls(ui, rect, &l);
         }
         ui.allocate_rect(rect, egui::Sense::hover());
-    }
-    fn settings(&mut self, ctx: &egui::Context) {
-        if !self.settings_open {
-            return;
-        }
-        let mut open = true;
-        let width = (ctx.content_rect().width() - 48.0).clamp(220.0, 360.0);
-        egui::Window::new("Informationen und Einstellungen")
-            .open(&mut open).title_bar(false).collapsible(false).resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER,Vec2::ZERO)
-            .fixed_size(Vec2::new(width,(ctx.content_rect().height()-140.0).max(160.0)))
-            .max_width(width)
-            .max_height((ctx.content_rect().height()-100.0).max(160.0))
-            .vscroll(false)
-            .frame(egui::Frame::new().fill(self.theme.panel()).inner_margin(18.0).corner_radius(20.0))
-            .show(ctx,|ui|{
-                ui.spacing_mut().item_spacing=Vec2::splat(12.0);
-                ui.label(RichText::new("Einstellungen").font(bold_font(23.0)));
-                ui.label(RichText::new(format!("Calculator {VERSION} · {}",COMMIT.chars().take(12).collect::<String>())).small().weak());
-                ui.add_space(4.0);
-                egui::ScrollArea::vertical().id_salt("settings-content").max_height((ui.available_height()-80.0).max(32.0)).auto_shrink([false,false]).show(ui,|ui|{
-                ui.label(RichText::new("Darstellung").font(bold_font(15.0)));
-                ui.horizontal_wrapped(|ui|{
-                    let width=((ui.available_width()-12.0)/2.0).max(96.0);
-                    for &theme in Theme::ALL {
-                        let selected=self.theme==theme;
-                        if ui.add_sized([width,40.0],egui::Button::new(RichText::new(theme.label()).font(bold_font(14.0)).color(if selected {Color32::from_rgb(20,20,22)}else{ui.visuals().text_color()})).fill(if selected {self.theme.accent()}else{self.theme.surface()}).corner_radius(12.0)).clicked(){self.theme=theme;self.theme.apply(ctx);self.dirty=true;}
-                    }
-                });
-                egui::Frame::new().fill(self.theme.surface()).inner_margin(12.0).corner_radius(12.0).show(ui,|ui|{
-                    ui.set_min_width(width-24.0);
-                    if settings_switch(ui,&mut self.history_right,"Verlauf rechts im Querformat",true){self.dirty=true;}
-                    if settings_switch(ui,&mut self.sound,"Tastenklicks",true){self.dirty=true;}
-                    if settings_switch(ui,&mut self.haptics,"Haptik",crate::feedback::supports_haptics()){self.dirty=true;}
-                    if !crate::feedback::supports_haptics(){ui.label(RichText::new("Vibration wird auf diesem Gerät nicht unterstützt.").small().weak());}
-                });
-                ui.collapsing("Bedienung",|ui|{ui.label("Ziffern, + − * /, Klammern und Enter. Rücktaste löscht eine Stelle, Escape alles und Entf die Eingabe.");});
-                ui.collapsing("Diagnose",|ui|{
-                    let size=ctx.content_rect().size();
-                    let browser:serde_json::Value={
-                        #[cfg(target_arch="wasm32")]
-                        {web_sys::window().and_then(|w|w.document()).and_then(|d|d.document_element()).and_then(|e|e.get_attribute("data-viewport")).and_then(|s|serde_json::from_str(&s).ok()).unwrap_or(serde_json::Value::Null)}
-                        #[cfg(not(target_arch="wasm32"))]
-                        {serde_json::Value::Null}
-                    };
-                    let text=serde_json::to_string_pretty(&serde_json::json!({"version":VERSION,"commit":COMMIT,"viewport":{"width":size.x,"height":size.y,"pixelsPerPoint":ctx.pixels_per_point()},"theme":self.theme,"browser":browser})).unwrap_or_default();
-                    ui.label(RichText::new(&text).monospace().small());
-                    if ui.button("Diagnose kopieren").clicked(){ctx.copy_text(text);}
-                });
-                ui.label(RichText::new("Berechnungen und Einstellungen bleiben auf diesem Gerät.").small().weak());
-                });
-                ui.separator();
-                if ui.add_sized([ui.available_width(),42.0],egui::Button::new(RichText::new("Fertig").font(bold_font(15.0))).fill(self.theme.surface()).corner_radius(12.0)).clicked(){self.settings_open=false;}
-            });
-        if !open {
-            self.settings_open = false;
-        }
     }
 }
 fn symbol(c: char) -> &'static str {
@@ -1225,8 +1191,10 @@ impl eframe::App for CalculatorApp {
         Duration::from_secs(1)
     }
 }
+mod buttons;
 mod feedback;
 mod icons;
+mod settings;
 mod touch;
 
 #[cfg(test)]
@@ -1813,6 +1781,120 @@ mod settings_footer_tests {
                     }
                     previous = Some(rect.top());
                 }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod mode_shortcut_tests {
+    use super::*;
+    fn press(app: &mut CalculatorApp, key: egui::Key) {
+        let ctx = egui::Context::default();
+        let _ = ctx.run(
+            egui::RawInput {
+                events: vec![egui::Event::Key {
+                    key,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::default(),
+                }],
+                ..Default::default()
+            },
+            |ctx| app.keyboard(ctx),
+        );
+    }
+    #[test]
+    fn closing_settings_then_switching_in_one_frame_keeps_both_events() {
+        let mut app = CalculatorApp {
+            settings_open: true,
+            ..Default::default()
+        };
+        let ctx = egui::Context::default();
+        let events = [egui::Key::Escape, egui::Key::F3]
+            .into_iter()
+            .map(|key| egui::Event::Key {
+                key,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers::default(),
+            })
+            .collect();
+        let _ = ctx.run(
+            egui::RawInput {
+                events,
+                ..Default::default()
+            },
+            |ctx| app.keyboard(ctx),
+        );
+        assert!(!app.settings_open);
+        assert_eq!(app.calculator.mode, Mode::Number);
+    }
+    #[test]
+    fn mode_shortcuts_preserve_calculations_and_respect_settings() {
+        let mut app = CalculatorApp::default();
+        for c in "130=".chars() {
+            app.dispatch(Action::from_char(c).unwrap());
+        }
+        press(&mut app, egui::Key::F3);
+        assert_eq!(app.calculator.mode, Mode::Number);
+        for c in "25=".chars() {
+            app.dispatch(Action::from_char(c).unwrap());
+        }
+        press(&mut app, egui::Key::F2);
+        assert_eq!(app.calculator.mode, Mode::Time);
+        assert_eq!(app.calculator.current_text(), "1:30");
+        app.settings_open = true;
+        press(&mut app, egui::Key::F3);
+        assert_eq!(app.calculator.mode, Mode::Time);
+        app.settings_open = false;
+        press(&mut app, egui::Key::F3);
+        assert_eq!(app.calculator.current_text(), "25");
+    }
+}
+
+#[cfg(test)]
+mod settings_navigation_tests {
+    use super::*;
+    #[test]
+    fn settings_tabs_remain_visible_on_small_screens() {
+        for size in [Vec2::new(320.0, 568.0), Vec2::new(844.0, 390.0)] {
+            let ctx = egui::Context::default();
+            configure_fonts(&ctx);
+            let mut app = CalculatorApp {
+                settings_open: true,
+                ..Default::default()
+            };
+            let mut labels = Vec::new();
+            for _ in 0..3 {
+                let output = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+                        ..Default::default()
+                    },
+                    |ctx| app.settings(ctx),
+                );
+                labels = output
+                    .shapes
+                    .iter()
+                    .filter_map(|clipped| {
+                        if let egui::Shape::Text(text) = &clipped.shape {
+                            let rect = text.galley.rect.translate(text.pos.to_vec2());
+                            if clipped.clip_rect.contains_rect(rect) {
+                                return Some(text.galley.text().to_owned());
+                            }
+                        }
+                        None
+                    })
+                    .collect();
+            }
+            for label in ["Allgemein", "Bedienung", "Diagnose", "Fertig"] {
+                assert!(
+                    labels.iter().any(|text| text == label),
+                    "Missing visible {label} at {size:?}: {labels:?}"
+                );
             }
         }
     }

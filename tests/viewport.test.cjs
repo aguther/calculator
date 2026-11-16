@@ -8,3 +8,14 @@ test('canvas height follows visible viewport and viewport changes',()=>{
  visualViewport.height=500;events.resize();assert.equal(values.get('--viewport-height'),'500px');
  visualViewport.offsetTop=20;events.scroll();assert.equal(values.get('--viewport-top'),'20px');
 });
+
+test('calculator function keys prevent browser shortcuts only on the canvas',()=>{
+ const handlers={};
+ const document={documentElement:{setAttribute(){},style:{setProperty(){}}},querySelector:()=>({}),addEventListener:(name,fn)=>{handlers[name]=fn;}};
+ vm.runInNewContext(fs.readFileSync('web/app.js','utf8'),{window:{innerHeight:760,addEventListener(){}},document,navigator:{}});
+ for(const [key,target,ctrlKey,want] of [['F1','calculator-canvas',false,true],['F2','calculator-canvas',false,true],['F3','calculator-canvas',false,true],['F5','calculator-canvas',false,false],['F3','update',false,false],['F3','calculator-canvas',true,false]]){
+  let prevented=false;
+  handlers.keydown?.({key,target:{id:target},ctrlKey,preventDefault(){prevented=true;}});
+  assert.equal(prevented,want,`${key}, ${target}, ctrl=${ctrlKey}`);
+ }
+});

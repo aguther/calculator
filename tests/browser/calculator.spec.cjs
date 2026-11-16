@@ -39,7 +39,7 @@ for(const viewport of [{width:320,height:568},{width:400,height:760}]){
 
 test('theme selection persists and blocks calculator keyboard while settings are open',async({page})=>{
  await page.setViewportSize({width:400,height:760});await ready(page);await page.keyboard.press('F1');
- await page.waitForTimeout(100);await page.mouse.click(290,197);
+ await page.waitForTimeout(100);await page.mouse.click(200,227);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').theme)).toBe('Light');
  await page.keyboard.type('123');await expect(page.locator('#calculator-status')).toContainText('0:00');
  await page.keyboard.press('Escape');await page.reload();await expect(page.locator('#loading')).toHaveCount(0);
@@ -124,9 +124,9 @@ test('safe-area insets and update banner leave the full canvas visible',async({p
 
 test('settings switches toggle and persist',async({page})=>{
  await page.setViewportSize({width:400,height:760});await ready(page);await page.keyboard.press('F1');await page.waitForTimeout(100);
- await page.mouse.click(339,315);
+ await page.mouse.click(339,338);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(false);
- await page.mouse.click(339,315);
+ await page.mouse.click(339,338);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(true);
  await page.keyboard.press('Escape');await page.reload();await expect(page.locator('#loading')).toHaveCount(0);
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').history_right)).toBe(true);
@@ -157,4 +157,34 @@ test('opaque iOS reference viewport uses height without a second top inset',asyn
  await expect.poll(async()=>{const rect=await page.locator('canvas').boundingBox();return [rect.y,rect.height];}).toEqual([0,778]);
  await page.locator('canvas').focus();await page.keyboard.type('1+2');await expect(page.locator('#calculator-status')).toContainText('0:02');
  await page.mouse.click(352,743);await expect(page.locator('#calculator-status')).toContainText('0:03');
+});
+
+
+test('F2 and F3 switch modes while preserving separate calculations',async({page})=>{
+ await ready(page);await page.keyboard.type('130=');await expect(page.locator('#calculator-status')).toContainText('1:30');
+ await page.keyboard.press('F3');await page.keyboard.type('25=');await expect(page.locator('#calculator-status')).toContainText('25');
+ await page.keyboard.press('F2');await expect(page.locator('#calculator-status')).toContainText('1:30');
+ await page.keyboard.press('F1');await page.keyboard.press('F3');await expect(page.locator('#calculator-status')).toContainText('1:30');
+ await page.keyboard.press('Escape');await page.keyboard.press('F3');await expect(page.locator('#calculator-status')).toContainText('25');
+});
+
+test('settings tabs expose help and diagnostics and return to preferences',async({page})=>{
+ await page.setViewportSize({width:400,height:760});await ready(page);await page.keyboard.press('F1');await page.waitForTimeout(100);
+ await page.mouse.click(200,139);await page.waitForTimeout(100);
+ await page.screenshot({path:'.cache/calculator-help.png'});
+ await page.mouse.click(320,139);await page.waitForTimeout(100);
+ await page.screenshot({path:'.cache/calculator-diagnostics.png'});
+ await page.mouse.click(80,139);await page.mouse.click(200,227);
+ await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('calculator-v1')||'{}').theme)).toBe('Light');
+ await page.keyboard.press('Escape');await page.keyboard.type('25+36=');await expect(page.locator('#calculator-status')).toContainText('1:01');
+});
+
+test('canvas function keys suppress browser defaults through actual event propagation',async({page})=>{
+ await ready(page);
+ for(const key of ['F1','F2','F3']){
+  const prevented=await page.locator('canvas').evaluate((canvas,key)=>{
+   const event=new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true});canvas.dispatchEvent(event);return event.defaultPrevented;
+  },key);
+  expect(prevented,`${key} should not trigger browser Help or Find`).toBe(true);
+ }
 });

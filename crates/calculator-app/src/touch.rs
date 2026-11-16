@@ -13,6 +13,11 @@ pub struct TouchController {
     contacts: HashMap<u64, Target>,
 }
 impl TouchController {
+    pub fn is_pressed_at(&self, pos: Pos2) -> bool {
+        self.contacts
+            .values()
+            .any(|target| target.rect.contains(pos))
+    }
     pub fn is_active(&self) -> bool {
         !self.contacts.is_empty()
     }

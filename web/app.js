@@ -1,3 +1,10 @@
+// Keep app shortcuts from opening browser Help or Find while the canvas is focused.
+document.addEventListener('keydown', event => {
+  if (event.target?.id === 'calculator-canvas' && !event.ctrlKey && !event.metaKey && !event.altKey && ['F1', 'F2', 'F3'].includes(event.key)) {
+    event.preventDefault();
+  }
+}, {capture: true});
+
 // Use the visible browser area; standalone iOS can report different CSS viewport units.
 function syncViewport() {
   const viewport = window.visualViewport;
