@@ -2,6 +2,9 @@
 import hashlib,json,pathlib,re,subprocess,sys,tempfile
 root=pathlib.Path(__file__).resolve().parents[1]
 tag=sys.argv[1]
+notes=root/'docs'/'release-notes'/(tag.removeprefix('v')+'.md')
+if not notes.is_file() or not notes.read_text(encoding='utf-8').strip():
+    raise SystemExit('Missing release notes for '+tag)
 def gh(*args,**kwargs):return subprocess.run(['gh',*args],check=True,**kwargs)
 # This check runs inside the global production publication lock.
 releases=json.loads(gh('release','list','--exclude-pre-releases','--limit','100','--json','tagName',capture_output=True,text=True).stdout)
@@ -12,7 +15,9 @@ for release in releases:
         raise SystemExit('Refusing to deploy an older release than the published or reserved version '+previous)
 result=subprocess.run(['gh','release','view',tag],capture_output=True)
 if result.returncode:
-    gh('release','create',tag,'--verify-tag','--title','Calculator '+tag,'--generate-notes','--draft')
+    gh('release','create',tag,'--verify-tag','--title','Calculator '+tag,'--notes-file',str(notes),'--draft')
+else:
+    gh('release','edit',tag,'--notes-file',str(notes))
 for file in sorted((root/'release').iterdir()):
     with tempfile.TemporaryDirectory() as temp:
         existing=subprocess.run(['gh','release','download',tag,'--pattern',file.name,'--dir',temp],capture_output=True)

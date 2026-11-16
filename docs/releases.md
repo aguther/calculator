@@ -14,7 +14,12 @@
 
 ## Eine Version freigeben
 
-Version in `[workspace.package]` erhöhen und Cargo.lock aktualisieren. Änderung
+Version in `[workspace.package]` erhöhen und Cargo.lock aktualisieren. Dazu die
+Änderungen für Nutzer in `docs/release-notes/VERSION.md` beschreiben: neue
+Funktionen, Korrekturen und gegebenenfalls Hinweise zum Update. Die Datei wird
+als GitHub-Release-Beschreibung verwendet; eine fehlende oder leere Beschreibung
+bricht die Freigabe ab. Bei einem wiederaufgenommenen Release wird die
+Beschreibung aus derselben Datei übernommen. Änderung
 prüfen und in `main` integrieren. Dann einen neuen, unveränderlichen Tag setzen:
 
 ```sh

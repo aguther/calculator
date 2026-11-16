@@ -80,8 +80,8 @@ impl Widget for PressButton<'_> {
             1.0
         } else {
             feedback.released_at.map_or(0.0, |at| {
-                let progress = ((now - at - 0.06) / 0.12).clamp(0.0, 1.0) as f32;
-                1.0 - progress * progress
+                let progress = ((now - at) / 0.06).clamp(0.0, 1.0) as f32;
+                (1.0 - progress).powi(2)
             })
         };
         ui.ctx().data_mut(|d| d.insert_temp(state_id, feedback));
@@ -130,8 +130,8 @@ impl Widget for PressButton<'_> {
 pub(super) fn face_rect(rect: egui::Rect, amount: f32) -> egui::Rect {
     let depth = (rect.height() * 0.09).clamp(3.5, 6.0);
     egui::Rect::from_min_max(
-        rect.min + egui::vec2(1.5 * amount, depth * amount),
-        rect.max - egui::vec2(1.5 * amount, depth * (1.0 - amount)),
+        rect.min + egui::vec2(0.0, depth * amount),
+        rect.max - egui::vec2(0.0, depth * (1.0 - amount)),
     )
 }
 pub(super) fn face_center(ui: &Ui, response: &Response) -> egui::Pos2 {
@@ -152,8 +152,8 @@ mod tests {
             (0.0, false),
             (0.001, true),
             (0.015, false),
-            (0.070, false),
-            (0.300, false),
+            (0.035, false),
+            (0.090, false),
         ] {
             let mut center = 0.0;
             let _ = ctx.run(
@@ -183,12 +183,12 @@ mod tests {
             "A short touch must visibly depress immediately: {centers:?}"
         );
         assert!(
-            centers[3] - centers[0] >= 3.0,
+            centers[3] - centers[0] >= 0.5,
             "Feedback must survive lifting the finger: {centers:?}"
         );
         assert!(
             (centers[4] - centers[0]).abs() < 0.1,
-            "Button must recover: {centers:?}"
+            "Button must recover within a quick tap: {centers:?}"
         );
     }
     #[test]

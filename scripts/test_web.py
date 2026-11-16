@@ -56,4 +56,38 @@ class WebBuildTests(unittest.TestCase):
         self.assertIn('tags:',text)
         self.assertNotIn('branches:',text)
         self.assertIn('needs: [verify, build]',text)
+class ReleaseNotesTests(unittest.TestCase):
+    def publish(self, notes=True, existing=False):
+        import runpy, shutil, subprocess
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as temp:
+            root=pathlib.Path(temp)
+            (root/'scripts').mkdir();(root/'release').mkdir()
+            script=root/'scripts/publish-release.py'
+            shutil.copyfile(ROOT/'scripts/publish-release.py',script)
+            expected='## Änderungen\n- Verständliche Beschreibung für die Nutzer.\n'
+            if notes:
+                target=root/'docs/release-notes/0.1.9.md';target.parent.mkdir(parents=True);target.write_text(expected,encoding='utf-8')
+            calls=[]
+            def run(args, **kwargs):
+                calls.append(args)
+                if args[:3]==['gh','release','list']:return subprocess.CompletedProcess(args,0,stdout='[]')
+                if args[:3]==['gh','release','view']:return subprocess.CompletedProcess(args,0 if existing else 1)
+                if '--notes-file' in args:
+                    self.assertEqual(pathlib.Path(args[args.index('--notes-file')+1]).read_text(encoding='utf-8'),expected)
+                return subprocess.CompletedProcess(args,0)
+            with patch('sys.argv',[str(script),'v0.1.9']),patch('subprocess.run',side_effect=run):
+                if not notes:
+                    with self.assertRaisesRegex(SystemExit,'release notes'):
+                        runpy.run_path(str(script),run_name='__main__')
+                    self.assertEqual(calls,[])
+                    return
+                runpy.run_path(str(script),run_name='__main__')
+            command=next(args for args in calls if args[:3]==['gh','release','edit' if existing else 'create'])
+            self.assertIn('--notes-file',command)
+            self.assertNotIn('--generate-notes',command)
+    def test_release_uses_its_versioned_description(self):self.publish()
+    def test_resumed_release_keeps_the_description_in_sync(self):self.publish(existing=True)
+    def test_missing_notes_fail_before_remote_changes(self):self.publish(notes=False)
+
 if __name__=='__main__':unittest.main()
