@@ -99,6 +99,8 @@ class DeploymentVerificationTests(unittest.TestCase):
         paths=[]
         class Handler(http.server.BaseHTTPRequestHandler):
             def do_GET(self):
+                if self.headers.get('User-Agent','').startswith('Python-urllib'):
+                    self.send_response(403);self.end_headers();return
                 paths.append(self.path)
                 self.send_response(200);self.end_headers();self.wfile.write(payloads.pop(0))
             def log_message(self,*args):pass

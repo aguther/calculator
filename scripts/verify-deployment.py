@@ -13,7 +13,7 @@ def verify(base_url, expected_build, attempts=12, delay=5):
         try:
             request = urllib.request.Request(
                 base_url.rstrip('/') + '/build-info.json',
-                headers={'Cache-Control': 'no-cache'},
+                headers={'Cache-Control': 'no-cache', 'User-Agent': 'calculator-deployment-check/1.0'},
             )
             with urllib.request.urlopen(request, timeout=10) as response:
                 actual = json.loads(response.read(1024 * 1024))['build']
