@@ -155,7 +155,13 @@ pub fn layout(width: f32, height: f32) -> Layout {
                 - gap * 8.0)
                 .max(30.0)
         },
-        content_width: width.min(if landscape { 1100.0 } else { 480.0 }),
+        content_width: width.min(if landscape {
+            1100.0
+        } else if width >= 600.0 {
+            720.0
+        } else {
+            480.0
+        }),
         header_height,
         display_height,
         paren_height,
