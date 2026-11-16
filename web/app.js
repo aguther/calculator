@@ -33,14 +33,40 @@ if ('serviceWorker' in navigator) {
     reloading = true;
     location.reload();
   });
-  // Release builds supply sw.js; Trunk development deliberately has no worker.
-  fetch('/sw.js', {cache:'no-store'}).then(response => {
-    if (!response.ok || !response.headers.get('content-type')?.includes('javascript')) return;
-    return navigator.serviceWorker.register('/sw.js', {updateViaCache:'none'}).then(registration => {
-      const offer = () => { if (registration.waiting && navigator.serviceWorker.controller) {update.hidden = false;update.title='Neue Version verfügbar · jetzt aktualisieren';update.setAttribute('aria-label',update.title);} };
+  const watchUpdates = registration => {
+    const offer = () => {
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        update.hidden = false;
+        update.title = 'Neue Version verfügbar · jetzt aktualisieren';
+        update.setAttribute('aria-label', update.title);
+      }
+    };
+    const watchInstalling = () => registration.installing?.addEventListener('statechange', offer);
+    registration.addEventListener('updatefound', watchInstalling);
+    watchInstalling();
+    update.addEventListener('click', () => registration.waiting?.postMessage({type:'ACTIVATE_UPDATE'}));
+    let checking = false;
+    const check = async () => {
       offer();
-      registration.addEventListener('updatefound', () => registration.installing?.addEventListener('statechange', offer));
-      update.addEventListener('click', () => registration.waiting?.postMessage({type:'ACTIVATE_UPDATE'}));
-    });
-  }).catch(() => { /* Offline and unavailable storage do not block the calculator. */ });
+      if (checking || document.hidden || navigator.onLine === false) return;
+      checking = true;
+      try { await registration.update(); }
+      catch { /* Offline checks are retried on reconnect or the next visible interval. */ }
+      finally { checking = false; offer(); }
+    };
+    window.addEventListener('pageshow', check);
+    window.addEventListener('focus', check);
+    window.addEventListener('online', check);
+    document.addEventListener('visibilitychange', check);
+    setInterval(check, 60000);
+    void check();
+  };
+  // An existing PWA registration remains usable even when launched offline.
+  navigator.serviceWorker.getRegistration('/').then(async existing => {
+    if (existing) { watchUpdates(existing); return; }
+    // Release builds supply sw.js; Trunk development deliberately has no worker.
+    const response = await fetch('/sw.js', {cache:'no-store'});
+    if (!response.ok || !response.headers.get('content-type')?.includes('javascript')) return;
+    watchUpdates(await navigator.serviceWorker.register('/sw.js', {updateViaCache:'none'}));
+  }).catch(() => { /* Unavailable storage does not block the calculator. */ });
 }

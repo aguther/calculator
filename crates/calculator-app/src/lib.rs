@@ -409,6 +409,29 @@ impl CalculatorApp {
             }
         }
     }
+    fn touch_input(&mut self, events: &[egui::Event]) {
+        self.touch.begin_frame();
+        if self.settings_open {
+            self.touch.cancel();
+            return;
+        }
+        for event in events {
+            match event {
+                egui::Event::Touch { id, phase, pos, .. } => match phase {
+                    egui::TouchPhase::Start => self.touch.start(id.0, *pos, &self.targets),
+                    egui::TouchPhase::End => {
+                        if let Some(action) = self.touch.end(id.0, *pos, &self.targets) {
+                            self.dispatch(action);
+                        }
+                    }
+                    egui::TouchPhase::Cancel => self.touch.cancel_contact(id.0),
+                    egui::TouchPhase::Move => {}
+                },
+                egui::Event::WindowFocused(false) => self.touch.cancel(),
+                _ => {}
+            }
+        }
+    }
     fn key(
         &mut self,
         ui: &mut egui::Ui,
@@ -1109,14 +1132,16 @@ impl eframe::App for CalculatorApp {
         let size = ctx.content_rect().size();
         if self.viewport_size.is_some_and(|old| old != size) {
             self.touch.cancel();
+            self.targets.clear();
         }
         self.viewport_size = Some(size);
         self.touch_frame = self.touch.is_active()
             || events
                 .iter()
                 .any(|e| matches!(e, egui::Event::Touch { .. }));
-        self.targets.clear();
         self.keyboard(ctx);
+        self.touch_input(&events);
+        self.targets.clear();
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()
@@ -1136,23 +1161,6 @@ impl eframe::App for CalculatorApp {
         crate::feedback::configure_sound(self.sound);
         if self.settings_open {
             self.touch.cancel();
-        } else {
-            for event in events {
-                match event {
-                    egui::Event::Touch { id, phase, pos, .. } => match phase {
-                        egui::TouchPhase::Start => self.touch.start(id.0, pos, &self.targets),
-                        egui::TouchPhase::End => {
-                            if let Some(action) = self.touch.end(id.0, pos, &self.targets) {
-                                self.dispatch(action);
-                            }
-                        }
-                        egui::TouchPhase::Cancel => self.touch.cancel_contact(id.0),
-                        egui::TouchPhase::Move => {}
-                    },
-                    egui::Event::WindowFocused(false) => self.touch.cancel(),
-                    _ => {}
-                }
-            }
         }
         #[cfg(target_arch = "wasm32")]
         {
@@ -1897,5 +1905,82 @@ mod settings_navigation_tests {
                 );
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod quick_touch_feedback_tests {
+    use super::*;
+    use eframe::App;
+    fn draw(
+        app: &mut CalculatorApp,
+        ctx: &egui::Context,
+        time: f64,
+        events: Vec<egui::Event>,
+    ) -> egui::FullOutput {
+        ctx.run(
+            egui::RawInput {
+                time: Some(time),
+                events,
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    Vec2::new(400.0, 760.0),
+                )),
+                ..Default::default()
+            },
+            |ctx| app.update(ctx, &mut eframe::Frame::_new_kittest()),
+        )
+    }
+    fn seven_y(output: &egui::FullOutput) -> f32 {
+        output
+            .shapes
+            .iter()
+            .find_map(|clipped| {
+                if let egui::Shape::Text(text) = &clipped.shape
+                    && text.galley.text() == "7"
+                {
+                    Some(text.pos.y)
+                } else {
+                    None
+                }
+            })
+            .expect("Seven key missing")
+    }
+    #[test]
+    fn same_frame_touch_commits_once_and_animates_without_an_emulated_pointer() {
+        let ctx = egui::Context::default();
+        configure_fonts(&ctx);
+        let mut app = CalculatorApp::default();
+        draw(&mut app, &ctx, 0.0, vec![]);
+        draw(&mut app, &ctx, 0.1, vec![]);
+        let resting = seven_y(&draw(&mut app, &ctx, 0.2, vec![]));
+        let pos = app
+            .targets
+            .iter()
+            .find(|t| matches!(t.action, Action::Digit('7')))
+            .unwrap()
+            .rect
+            .center();
+        let events = [egui::TouchPhase::Start, egui::TouchPhase::End]
+            .into_iter()
+            .map(|phase| egui::Event::Touch {
+                device_id: egui::TouchDeviceId(0),
+                id: egui::TouchId(1),
+                phase,
+                pos,
+                force: None,
+            })
+            .collect();
+        let pressed = draw(&mut app, &ctx, 0.21, events);
+        assert_eq!(app.calculator.current_text(), "0:07");
+        assert!(seven_y(&pressed) - resting >= 4.0);
+        assert_eq!(
+            pressed.viewport_output[&egui::ViewportId::ROOT].repaint_delay,
+            Duration::ZERO
+        );
+        assert!(seven_y(&draw(&mut app, &ctx, 0.23, vec![])) - resting >= 4.0);
+        draw(&mut app, &ctx, 0.3, vec![]);
+        assert!((seven_y(&draw(&mut app, &ctx, 0.6, vec![])) - resting).abs() < 0.1);
+        assert_eq!(app.calculator.current_text(), "0:07");
     }
 }

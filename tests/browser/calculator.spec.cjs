@@ -59,7 +59,7 @@ test('complete second build updates both tabs and remains available offline',asy
   // Foreground the page before Playwright waits for stable clickable geometry.
   await page.bringToFront();
   await request.post('/__test/hold-next');
-  await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;void r.update();});
+  await page.evaluate(()=>window.dispatchEvent(new Event('pageshow')));
   await expect.poll(()=>page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();return r.installing?.state;})).toBe('installing');
   await expect(page.locator('#update')).toBeHidden();
   await page.locator('canvas').focus();await page.keyboard.type('+5=');await expect(page.locator('#calculator-status')).toContainText('0:50');
@@ -187,4 +187,28 @@ test('canvas function keys suppress browser defaults through actual event propag
   },key);
   expect(prevented,`${key} should not trigger browser Help or Find`).toBe(true);
  }
+});
+
+
+test('an open PWA discovers a release on the periodic check without reloading',async({page,request})=>{
+ await request.post('/__test/build-current');
+ try {
+  await page.clock.install();await ready(page);await page.keyboard.type('25+36=');
+  await request.post('/__test/build-next');
+  await page.clock.fastForward(60001);
+  await expect(page.locator('#update')).toBeVisible();
+  await expect(page.locator('#calculator-status')).toContainText('1:01');
+ } finally {await request.post('/__test/build-current');}
+});
+
+test('a PWA launched offline discovers releases after reconnecting',async({page,context,request})=>{
+ await request.post('/__test/build-current');
+ try {
+  await ready(page);await page.keyboard.type('45=');await expect(page.locator('#calculator-status')).toContainText('0:45');
+  await context.setOffline(true);await page.reload();await expect(page.locator('#loading')).toHaveCount(0);
+  await request.post('/__test/build-next');await context.setOffline(false);
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  await expect(page.locator('#update')).toBeVisible();
+  await expect(page.locator('#calculator-status')).toContainText('0:45');
+ } finally {await context.setOffline(false);await request.post('/__test/build-current');}
 });

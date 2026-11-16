@@ -41,6 +41,11 @@ impl<'a> PressButton<'a> {
         self
     }
 }
+#[derive(Clone, Copy, Default)]
+struct PressFeedback {
+    held: bool,
+    released_at: Option<f64>,
+}
 impl Widget for PressButton<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let (rect, response) = ui.allocate_exact_size(self.size, Sense::click());
@@ -54,17 +59,43 @@ impl Widget for PressButton<'_> {
         });
         let pressed = ui.is_enabled()
             && (response.is_pointer_button_down_on() || self.held || response.clicked());
-        let amount = ui
+        let now = ui.input(|input| input.time);
+        let state_id = response.id.with("press-feedback");
+        let mut feedback = ui
             .ctx()
-            .animate_bool_with_time(response.id.with("press"), pressed, 0.07);
+            .data(|d| d.get_temp::<PressFeedback>(state_id))
+            .unwrap_or_default();
+        if pressed && !feedback.held {
+            // A complete tap can arrive in one frame: schedule the release frame
+            // even when no further input arrives to wake the renderer.
+            ui.ctx().request_repaint();
+        }
+        if pressed {
+            feedback.released_at = None;
+        } else if feedback.held {
+            feedback.released_at = Some(now);
+        }
+        feedback.held = pressed;
+        let amount = if pressed {
+            1.0
+        } else {
+            feedback.released_at.map_or(0.0, |at| {
+                let progress = ((now - at - 0.06) / 0.12).clamp(0.0, 1.0) as f32;
+                1.0 - progress * progress
+            })
+        };
+        ui.ctx().data_mut(|d| d.insert_temp(state_id, feedback));
+        if !pressed && amount > 0.0 {
+            ui.ctx().request_repaint();
+        }
         let face = face_rect(rect, amount);
         ui.ctx()
             .data_mut(|d| d.insert_temp(response.id.with("face-center"), face.center()));
         if ui.is_rect_visible(rect) {
             ui.painter()
                 .rect_filled(rect, self.radius, self.fill.gamma_multiply(0.55));
-            let fill = if pressed {
-                self.fill.gamma_multiply(0.88)
+            let fill = if amount > 0.0 {
+                self.fill.lerp_to_gamma(self.color, 0.16 * amount)
             } else if response.hovered() {
                 self.fill.lerp_to_gamma(Color32::WHITE, 0.05)
             } else {
@@ -97,9 +128,10 @@ impl Widget for PressButton<'_> {
     }
 }
 pub(super) fn face_rect(rect: egui::Rect, amount: f32) -> egui::Rect {
+    let depth = (rect.height() * 0.09).clamp(3.5, 6.0);
     egui::Rect::from_min_max(
-        rect.min + egui::vec2(0.0, 2.5 * amount),
-        rect.max - egui::vec2(0.0, 3.0 - 2.5 * amount),
+        rect.min + egui::vec2(1.5 * amount, depth * amount),
+        rect.max - egui::vec2(1.5 * amount, depth * (1.0 - amount)),
     )
 }
 pub(super) fn face_center(ui: &Ui, response: &Response) -> egui::Pos2 {
@@ -112,6 +144,54 @@ pub(super) fn face_center(ui: &Ui, response: &Response) -> egui::Pos2 {
 mod tests {
     use super::*;
     #[test]
+    fn quick_touch_is_visible_immediately_and_after_release() {
+        let ctx = egui::Context::default();
+        super::super::configure_fonts(&ctx);
+        let mut centers = Vec::new();
+        for (time, held) in [
+            (0.0, false),
+            (0.001, true),
+            (0.015, false),
+            (0.070, false),
+            (0.300, false),
+        ] {
+            let mut center = 0.0;
+            let _ = ctx.run(
+                egui::RawInput {
+                    time: Some(time),
+                    ..Default::default()
+                },
+                |ctx| {
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        let response = ui.add(
+                            PressButton::new(
+                                "7",
+                                Vec2::new(80.0, 60.0),
+                                Color32::GRAY,
+                                Color32::WHITE,
+                            )
+                            .held(held),
+                        );
+                        center = face_center(ui, &response).y;
+                    });
+                },
+            );
+            centers.push(center);
+        }
+        assert!(
+            centers[1] - centers[0] >= 4.0,
+            "A short touch must visibly depress immediately: {centers:?}"
+        );
+        assert!(
+            centers[3] - centers[0] >= 3.0,
+            "Feedback must survive lifting the finger: {centers:?}"
+        );
+        assert!(
+            (centers[4] - centers[0]).abs() < 0.1,
+            "Button must recover: {centers:?}"
+        );
+    }
+    #[test]
     fn pressing_moves_the_face_without_moving_the_hit_target() {
         let ctx = egui::Context::default();
         super::super::configure_fonts(&ctx);
@@ -122,7 +202,7 @@ mod tests {
             (0.1, true),
             (0.2, true),
             (0.3, false),
-            (0.4, false),
+            (0.5, false),
         ] {
             let mut y = 0.0;
             let _ = ctx.run(

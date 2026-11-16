@@ -11,11 +11,16 @@ pub struct Target {
 #[derive(Default)]
 pub struct TouchController {
     contacts: HashMap<u64, Target>,
+    started: HashMap<u64, Target>,
 }
 impl TouchController {
+    pub fn begin_frame(&mut self) {
+        self.started.clear();
+    }
     pub fn is_pressed_at(&self, pos: Pos2) -> bool {
         self.contacts
             .values()
+            .chain(self.started.values())
             .any(|target| target.rect.contains(pos))
     }
     pub fn is_active(&self) -> bool {
@@ -24,13 +29,16 @@ impl TouchController {
     pub fn start(&mut self, id: u64, pos: Pos2, targets: &[Target]) {
         if let Some(target) = targets.iter().find(|t| t.rect.contains(pos)) {
             self.contacts.insert(id, *target);
+            self.started.insert(id, *target);
         }
     }
     pub fn cancel_contact(&mut self, id: u64) {
         self.contacts.remove(&id);
+        self.started.remove(&id);
     }
     pub fn cancel(&mut self) {
         self.contacts.clear();
+        self.started.clear();
     }
     pub fn end(&mut self, id: u64, pos: Pos2, targets: &[Target]) -> Option<Action> {
         let target = self.contacts.remove(&id)?;
@@ -79,5 +87,37 @@ impl TouchController {
         )
         .contains(pos)
         .then_some(target.action)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn a_touch_that_starts_and_ends_in_one_frame_still_has_visual_feedback() {
+        let target = Target {
+            rect: Rect::from_min_size(Pos2::ZERO, eframe::egui::Vec2::splat(60.0)),
+            action: Action::Digit('7'),
+            group: 0,
+        };
+        let mut touch = TouchController::default();
+        let pos = target.rect.center();
+        touch.start(1, pos, &[target]);
+        assert!(matches!(
+            touch.end(1, pos, &[target]),
+            Some(Action::Digit('7'))
+        ));
+        assert!(
+            touch.is_pressed_at(pos),
+            "A fast touch must leave one frame of visual feedback"
+        );
+        touch.begin_frame();
+        assert!(!touch.is_pressed_at(pos));
+        touch.start(2, pos, &[target]);
+        touch.cancel_contact(2);
+        assert!(
+            !touch.is_pressed_at(pos),
+            "A canceled contact must not leave feedback queued"
+        );
     }
 }
