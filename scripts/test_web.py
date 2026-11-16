@@ -90,4 +90,26 @@ class ReleaseNotesTests(unittest.TestCase):
     def test_resumed_release_keeps_the_description_in_sync(self):self.publish(existing=True)
     def test_missing_notes_fail_before_remote_changes(self):self.publish(notes=False)
 
+class DeploymentVerificationTests(unittest.TestCase):
+    def test_only_the_verified_build_is_accepted(self):
+        import http.server, threading
+        spec=importlib.util.spec_from_file_location('verify_deployment',ROOT/'scripts/verify-deployment.py')
+        deploy=importlib.util.module_from_spec(spec);spec.loader.exec_module(deploy)
+        payloads=[b'{"build":"old"}',b'{"build":"verified"}']
+        paths=[]
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                paths.append(self.path)
+                self.send_response(200);self.end_headers();self.wfile.write(payloads.pop(0))
+            def log_message(self,*args):pass
+        with http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler) as server:
+            thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+            try:
+                deploy.verify('http://127.0.0.1:'+str(server.server_port),'verified',attempts=2,delay=0)
+                self.assertEqual(paths,['/build-info.json','/build-info.json'])
+                payloads.append(b'{"build":"stale"}')
+                with self.assertRaisesRegex(SystemExit,'Expected build verified, received stale'):
+                    deploy.verify('http://127.0.0.1:'+str(server.server_port),'verified',attempts=1,delay=0)
+            finally:server.shutdown();thread.join()
+
 if __name__=='__main__':unittest.main()

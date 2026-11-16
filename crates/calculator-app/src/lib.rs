@@ -1931,7 +1931,7 @@ mod quick_touch_feedback_tests {
             |ctx| app.update(ctx, &mut eframe::Frame::_new_kittest()),
         )
     }
-    fn seven_y(output: &egui::FullOutput) -> f32 {
+    fn seven_height(output: &egui::FullOutput) -> f32 {
         output
             .shapes
             .iter()
@@ -1939,7 +1939,7 @@ mod quick_touch_feedback_tests {
                 if let egui::Shape::Text(text) = &clipped.shape
                     && text.galley.text() == "7"
                 {
-                    Some(text.pos.y)
+                    Some(text.galley.size().y)
                 } else {
                     None
                 }
@@ -1953,7 +1953,7 @@ mod quick_touch_feedback_tests {
         let mut app = CalculatorApp::default();
         draw(&mut app, &ctx, 0.0, vec![]);
         draw(&mut app, &ctx, 0.1, vec![]);
-        let resting = seven_y(&draw(&mut app, &ctx, 0.2, vec![]));
+        let resting = seven_height(&draw(&mut app, &ctx, 0.2, vec![]));
         let pos = app
             .targets
             .iter()
@@ -1973,14 +1973,14 @@ mod quick_touch_feedback_tests {
             .collect();
         let pressed = draw(&mut app, &ctx, 0.21, events);
         assert_eq!(app.calculator.current_text(), "0:07");
-        assert!(seven_y(&pressed) - resting >= 4.0);
+        assert!(resting - seven_height(&pressed) >= 1.0);
         assert_eq!(
             pressed.viewport_output[&egui::ViewportId::ROOT].repaint_delay,
             Duration::ZERO
         );
-        assert!(seven_y(&draw(&mut app, &ctx, 0.23, vec![])) - resting >= 4.0);
+        assert!(resting - seven_height(&draw(&mut app, &ctx, 0.23, vec![])) >= 1.0);
         draw(&mut app, &ctx, 0.3, vec![]);
-        assert!((seven_y(&draw(&mut app, &ctx, 0.6, vec![])) - resting).abs() < 0.1);
+        assert!((seven_height(&draw(&mut app, &ctx, 0.6, vec![])) - resting).abs() < 0.1);
         assert_eq!(app.calculator.current_text(), "0:07");
     }
 }

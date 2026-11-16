@@ -55,3 +55,7 @@ Die PWA prüft auf neue Versionen beim Zurückkehren (`pageshow`, Fokus, Sichtba
 Touch-Eingaben werden vor dem Zeichnen ausgewertet. Auch ein Start und Ende innerhalb desselben Frames hinterlassen eine sichtbare Druckrückmeldung; abgebrochene Kontakte werden verworfen. Die Tastenfläche sinkt sofort um größenabhängige 3,5–6 Pixel ein, ändert dabei ihren Kontrast und behält ihre Breite. Nach dem Loslassen federt sie ohne zusätzliche Haltephase innerhalb von 60 ms zurück. Form und Rundung der Tasten bleiben unverändert. Trefferflächen und Auslösen beim Loslassen bleiben erhalten.
 
 Geprüft durch Service-Worker-Lebenszyklustests, Browser-Updates ohne Neustart und nach Offline-Start, Touch-Tests mit überlappenden Kontakten und Renderingtests für kurze Berührungen einschließlich kompletter Start-/End-Ereignisse innerhalb eines Frames. Die konkrete Wahrnehmung auf einem physischen iPhone bleibt manuell zu prüfen.
+
+## Flache Tasten und Referenz-Webversion
+
+Die dauerhafte 3D-Darstellung wurde entsprechend Version 0.1.5 entfernt: kein Sockel, keine Schattenkante und keine angehobene Tastenfläche. Form, Rundung und Farben bleiben erhalten. Die Rückmeldung orientiert sich an der ursprünglichen Webversion (`simple-calculator`, CSS-Referenz 0274b425): sofortige Skalierung auf 92 Prozent und sichtbarer Kontrastwechsel, anschließend Rückkehr innerhalb von 60 ms. Es wird keine Tiefe oder schräg wirkende Höhenverschiebung erzeugt. Trefferflächen und Touch-Abbruchverhalten bleiben unverändert.

@@ -1,4 +1,4 @@
-//! Raised buttons keep a stable hit area while their face animates on press.
+//! Flat buttons retain their hit area while a quick scale and contrast change marks a press.
 use eframe::egui::{self, Color32, FontId, Response, Sense, Ui, Vec2, Widget};
 
 pub(super) struct PressButton<'a> {
@@ -92,8 +92,6 @@ impl Widget for PressButton<'_> {
         ui.ctx()
             .data_mut(|d| d.insert_temp(response.id.with("face-center"), face.center()));
         if ui.is_rect_visible(rect) {
-            ui.painter()
-                .rect_filled(rect, self.radius, self.fill.gamma_multiply(0.55));
             let fill = if amount > 0.0 {
                 self.fill.lerp_to_gamma(self.color, 0.16 * amount)
             } else if response.hovered() {
@@ -117,9 +115,11 @@ impl Widget for PressButton<'_> {
                     egui::StrokeKind::Inside,
                 );
             }
+            let mut font = self.font;
+            font.size *= 1.0 - 0.08 * amount;
             let galley = ui
                 .painter()
-                .layout_no_wrap(self.text.to_owned(), self.font, self.color);
+                .layout_no_wrap(self.text.to_owned(), font, self.color);
             ui.painter()
                 .with_clip_rect(ui.clip_rect().intersect(face))
                 .galley(face.center() - galley.size() * 0.5, galley, self.color);
@@ -128,11 +128,7 @@ impl Widget for PressButton<'_> {
     }
 }
 pub(super) fn face_rect(rect: egui::Rect, amount: f32) -> egui::Rect {
-    let depth = (rect.height() * 0.09).clamp(3.5, 6.0);
-    egui::Rect::from_min_max(
-        rect.min + egui::vec2(0.0, depth * amount),
-        rect.max - egui::vec2(0.0, depth * (1.0 - amount)),
-    )
+    rect.shrink2(rect.size() * (0.04 * amount))
 }
 pub(super) fn face_center(ui: &Ui, response: &Response) -> egui::Pos2 {
     ui.ctx()
@@ -144,10 +140,23 @@ pub(super) fn face_center(ui: &Ui, response: &Response) -> egui::Pos2 {
 mod tests {
     use super::*;
     #[test]
+    fn resting_button_is_flat_and_press_scales_about_its_center() {
+        let rect = egui::Rect::from_min_size(egui::pos2(10.0, 20.0), Vec2::new(100.0, 60.0));
+        assert_eq!(
+            face_rect(rect, 0.0),
+            rect,
+            "Resting buttons must fill their full area without a raised face"
+        );
+        let pressed = face_rect(rect, 1.0);
+        assert_eq!(pressed.center(), rect.center());
+        assert!((pressed.width() - 92.0).abs() < 0.1);
+        assert!((pressed.height() - 55.2).abs() < 0.1);
+    }
+    #[test]
     fn quick_touch_is_visible_immediately_and_after_release() {
         let ctx = egui::Context::default();
         super::super::configure_fonts(&ctx);
-        let mut centers = Vec::new();
+        let mut widths = Vec::new();
         for (time, held) in [
             (0.0, false),
             (0.001, true),
@@ -155,44 +164,64 @@ mod tests {
             (0.035, false),
             (0.090, false),
         ] {
-            let mut center = 0.0;
-            let _ = ctx.run(
+            let mut hit = egui::Rect::NOTHING;
+            let output = ctx.run(
                 egui::RawInput {
                     time: Some(time),
                     ..Default::default()
                 },
                 |ctx| {
                     egui::CentralPanel::default().show(ctx, |ui| {
-                        let response = ui.add(
-                            PressButton::new(
-                                "7",
-                                Vec2::new(80.0, 60.0),
-                                Color32::GRAY,
-                                Color32::WHITE,
+                        hit = ui
+                            .add(
+                                PressButton::new(
+                                    "7",
+                                    Vec2::new(80.0, 60.0),
+                                    Color32::GRAY,
+                                    Color32::WHITE,
+                                )
+                                .held(held),
                             )
-                            .held(held),
-                        );
-                        center = face_center(ui, &response).y;
+                            .rect;
                     });
                 },
             );
-            centers.push(center);
+            let faces: Vec<_> = output
+                .shapes
+                .iter()
+                .filter_map(|clipped| {
+                    if let egui::Shape::Rect(shape) = &clipped.shape
+                        && hit.contains_rect(shape.rect)
+                    {
+                        Some(shape.rect)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            assert_eq!(
+                faces.len(),
+                1,
+                "Flat buttons must not paint a second shadow or raised base"
+            );
+            let width = faces[0].width();
+            widths.push(width);
         }
         assert!(
-            centers[1] - centers[0] >= 4.0,
-            "A short touch must visibly depress immediately: {centers:?}"
+            widths[0] - widths[1] >= 4.0,
+            "A short touch must visibly scale immediately: {widths:?}"
         );
         assert!(
-            centers[3] - centers[0] >= 0.5,
-            "Feedback must survive lifting the finger: {centers:?}"
+            widths[0] - widths[3] >= 0.5,
+            "Feedback must survive lifting the finger: {widths:?}"
         );
         assert!(
-            (centers[4] - centers[0]).abs() < 0.1,
-            "Button must recover within a quick tap: {centers:?}"
+            (widths[4] - widths[0]).abs() < 0.1,
+            "Button must recover within a quick tap: {widths:?}"
         );
     }
     #[test]
-    fn pressing_moves_the_face_without_moving_the_hit_target() {
+    fn pressing_keeps_the_face_center_and_hit_target_stable() {
         let ctx = egui::Context::default();
         super::super::configure_fonts(&ctx);
         let mut centers = Vec::new();
@@ -232,8 +261,8 @@ mod tests {
             centers.push(y);
         }
         assert!(
-            centers[2] > centers[0] + 2.0,
-            "Pressed face did not sink: {centers:?}"
+            (centers[2] - centers[0]).abs() < 0.1,
+            "Flat press must stay centered: {centers:?}"
         );
         assert!(
             (centers[4] - centers[0]).abs() < 0.1,

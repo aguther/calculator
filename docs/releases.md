@@ -2,7 +2,7 @@
 
 ## Einmalige Einrichtung
 
-1. App-Arbeitsbranch nach Review in `main` integrieren. `main` bleibt ohne Deployment.
+1. App-Arbeitsbranch nach Review in `main` integrieren. `main` veröffentlicht nach erfolgreichen Prüfungen nur auf der Entwicklungsadresse.
 2. In GitHub unter Settings → Secrets and variables → Actions die Secrets
    `CLOUDFLARE_API_TOKEN` und `CLOUDFLARE_ACCOUNT_ID` hinterlegen.
    Das Token benötigt Zugriff zum Deployment von Workers/Static Assets im
@@ -63,3 +63,15 @@ Ein neuer Service Worker lädt die komplette Anwendung vor. Bei Fehlschlag wird
 sein Cache entfernt und die bisherige Version bleibt aktiv. Ein verfügbares Update
 wird per Schaltfläche angeboten. Nach Bestätigung wechseln die offenen Tabs durch
 Neuladen auf die neue Version. Persistierter Rechnerzustand bleibt erhalten.
+
+## Entwicklungsadresse für main
+
+Nach jedem Push auf `main` laufen die vollständigen Windows-, Linux- und Web-Prüfungen. Erst wenn alle erfolgreich sind, veröffentlicht CI das bereits geprüfte Web-Artefakt unter:
+
+https://calculator-dev.andreas-7f3.workers.dev
+
+Der Job verwendet ausschließlich `wrangler.dev.jsonc` und den Worker `calculator-dev`. Pull Requests und Release-Tags lösen dieses Deployment nicht aus. Ein inzwischen überholter Main-Build wird übersprungen. Nach dem Deployment wird der Build-Hash der Adresse mit dem geprüften Artefakt verglichen.
+
+Die Entwicklungsadresse ist öffentlich. Sie hat aufgrund der eigenen Origin getrennte Berechnungen, Einstellungen und PWA-Caches. Produktion bleibt `calculator` und wird ausschließlich mit Versions-Tags aktualisiert. Der ursprüngliche Worker `simple-calculator` bleibt unberührt.
+
+Alle verwendeten GitHub-Actions laufen mit Node.js 24; auch die npm-Buildschritte verwenden Node.js 24.

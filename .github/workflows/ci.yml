@@ -3,6 +3,7 @@ on:
   push:
     branches: [main, 'codex/**']
   pull_request:
+  workflow_dispatch:
   workflow_call:
 permissions:
   contents: read
@@ -22,11 +23,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: '24'
       - name: Linux build dependencies
@@ -52,7 +53,7 @@ jobs:
         if: runner.os == 'Windows'
         run: python scripts/windows_binary.py target/release/calculator.exe
       - run: python scripts/package.py ${{ matrix.platform }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ matrix.platform }}
           path: release/*
@@ -61,11 +62,11 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: '24'
           cache: npm
@@ -81,13 +82,64 @@ jobs:
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
         run: xvfb-run -a npm test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: web
           path: dist/
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         if: failure()
         with:
           name: browser-failures
           path: test-results/
+
+  deploy-development:
+    name: Deploy main to development
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [native, web]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    concurrency:
+      group: calculator-development
+      cancel-in-progress: true
+    environment:
+      name: development
+      url: https://calculator-dev.andreas-7f3.workers.dev
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: web
+          path: dist
+      - run: npm ci
+      - name: Check this is still the latest main commit
+        id: latest
+        shell: bash
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: |
+          current="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ "$current" = "$EXPECTED_COMMIT" ]; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Skipping superseded main build.'
+            echo 'current=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Deploy the verified development build
+        if: steps.latest.outputs.current == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --no-install wrangler deploy --config wrangler.dev.jsonc
+      - name: Verify the development address serves this build
+        if: steps.latest.outputs.current == 'true'
+        run: python scripts/verify-deployment.py https://calculator-dev.andreas-7f3.workers.dev dist/build-info.json
